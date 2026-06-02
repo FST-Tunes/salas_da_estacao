@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Lock, Clock, MinusCircle, HandTap, CursorClick } from "@phosphor-icons/react";
+import { Lock, Clock, MinusCircle, Check, HandTap, CursorClick } from "@phosphor-icons/react";
 import type { SlotState } from "@/lib/types";
 import type { SlotCell } from "@/app/actions/availability";
 import { dragRun, fillRun, type SlotRun } from "@/lib/time/selection";
@@ -13,16 +13,26 @@ const STATE_CLS: Record<SlotState, string> = {
   off: "bg-off-fill text-off-ink",
 };
 
-const LOCKED_ICON = { pending: Clock, busy: Lock, off: MinusCircle } as const;
+// Right-side label + icon for each state — never colour alone (design-system §3).
+const STATE_META: Record<SlotState, { label: string; Icon: typeof Check }> = {
+  free: { label: "Disponível", Icon: Check },
+  pending: { label: "Pendente", Icon: Clock },
+  busy: { label: "Ocupada", Icon: Lock },
+  off: { label: "Fora de horário", Icon: MinusCircle },
+};
 
 /**
- * Step 3 — slot picker. A grid of 30-min "chips" with three selection gestures
- * mapped onto the pure rules in lib/time/selection:
- *  - drag (mouse or touch) → extend, clamping at the first occupied block;
- *  - tap-to-tap / Shift+click → fill the range if every block between is free,
- *    otherwise restart the selection at the new block;
- *  - keyboard (Enter/Space, Shift+Enter) for accessibility.
- * Touch drag uses elementFromPoint so a finger sliding across chips selects them.
+ * Step 3 — slot picker, laid out as a top-to-bottom timeline (one row per
+ * 30-min block, earliest at the top — like a day planner) so consecutive times
+ * read in a single vertical sweep instead of wrapping across columns.
+ *
+ * Selection maps the pure rules in lib/time/selection onto two gestures:
+ *  - mouse drag → extend, clamping at the first occupied block (the "wall");
+ *  - tap / click (touch, mouse-without-drag, keyboard) → first tap sets the
+ *    anchor, a second tap fills the range if every block between is free,
+ *    otherwise the selection restarts at the new block (spec rule 2).
+ * Touch never starts a drag, so the page can scroll the (tall) timeline freely;
+ * mouse drag uses elementFromPoint so the pointer sliding over rows selects them.
  */
 export function TimeStep({
   blocks,
@@ -41,7 +51,9 @@ export function TimeStep({
   const downRef = useRef(false);
   const dragAnchorRef = useRef<number | null>(null);
   const movedRef = useRef(false);
-  // Committed anchor that a subsequent tap / Shift-click fills from.
+  // Suppress the click that fires right after a committed mouse drag.
+  const justDraggedRef = useRef(false);
+  // Committed anchor that a subsequent tap fills from.
   const anchorRef = useRef<number | null>(null);
 
   const cellIdxAt = (x: number, y: number): number | null => {
@@ -51,7 +63,7 @@ export function TimeStep({
     return Number(chip.dataset.slot);
   };
 
-  const handleTap = (i: number, fill: boolean) => {
+  const handleTap = (i: number, _fill: boolean) => {
     // Toggle off when tapping the single currently-selected block.
     if (selection && selection.lo === selection.hi && selection.lo === i) {
       anchorRef.current = null;
@@ -67,29 +79,31 @@ export function TimeStep({
       }
       // Range crosses an occupied block → restart here (spec rule 2).
     }
-    void fill; // fill intent is implicit: a second tap always tries to fill
     anchorRef.current = i;
     onSelectionChange({ lo: i, hi: i });
   };
 
+  // Mouse-only drag. Touch falls through to the native click below so the page
+  // can still scroll the timeline.
   const onPointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType === "mouse" && e.button !== 0) return;
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
     const i = cellIdxAt(e.clientX, e.clientY);
     if (i == null || cells[i]?.state !== "free") return;
-    e.preventDefault();
     downRef.current = true;
     dragAnchorRef.current = i;
     movedRef.current = false;
     gridRef.current?.setPointerCapture(e.pointerId);
-    onSelectionChange({ lo: i, hi: i });
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
     if (!downRef.current || dragAnchorRef.current == null) return;
     const j = cellIdxAt(e.clientX, e.clientY);
     if (j == null) return;
-    if (j !== dragAnchorRef.current) movedRef.current = true;
-    onSelectionChange(dragRun(cells, dragAnchorRef.current, j));
+    if (j !== dragAnchorRef.current) {
+      movedRef.current = true;
+      e.preventDefault(); // avoid text selection while dragging
+      onSelectionChange(dragRun(cells, dragAnchorRef.current, j));
+    }
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
@@ -100,12 +114,9 @@ export function TimeStep({
     } catch {
       /* capture may already be gone */
     }
-    const a = dragAnchorRef.current;
-    if (a == null) return;
-    if (movedRef.current) {
-      anchorRef.current = a; // drag committed; future Shift/tap fills from here
-    } else {
-      handleTap(a, e.shiftKey);
+    if (movedRef.current && dragAnchorRef.current != null) {
+      anchorRef.current = dragAnchorRef.current; // future taps fill from here
+      justDraggedRef.current = true; // swallow the trailing click
     }
   };
 
@@ -113,12 +124,21 @@ export function TimeStep({
     downRef.current = false;
   };
 
+  // Fires for taps (touch / mouse-without-drag) and keyboard activation.
+  const onCellClick = (idx: number, e: React.MouseEvent) => {
+    if (justDraggedRef.current) {
+      justDraggedRef.current = false;
+      return;
+    }
+    handleTap(idx, e.shiftKey);
+  };
+
   return (
     <div className="space-y-4">
       <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-muted">
         <span className="inline-flex items-center gap-1.5">
           <HandTap size={15} weight="bold" aria-hidden />
-          Deslize ou toque no início e no fim
+          Toque na hora de início e na de fim
         </span>
         <span className="hidden items-center gap-1.5 sm:inline-flex">
           <CursorClick size={15} weight="bold" aria-hidden />
@@ -134,7 +154,7 @@ export function TimeStep({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
-        className="grid touch-none grid-cols-3 gap-2 select-none sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8"
+        className="flex max-w-md select-none flex-col overflow-hidden rounded-lg border border-hairline"
       >
         {blocks.map((start, idx) => {
           const cell = cells[idx] ?? { state: "off" as SlotState, label: null };
@@ -142,7 +162,9 @@ export function TimeStep({
           const selected = !!selection && idx >= selection.lo && idx <= selection.hi;
           const isRunStart = selected && idx === selection!.lo;
           const isRunEnd = selected && idx === selection!.hi;
-          const LockedIcon = free ? null : LOCKED_ICON[cell.state as "pending" | "busy" | "off"];
+          const meta = STATE_META[cell.state];
+          const RightIcon = selected ? Check : meta.Icon;
+          const rightLabel = selected ? "Selecionado" : meta.label;
 
           return (
             <button
@@ -153,33 +175,28 @@ export function TimeStep({
               disabled={!free}
               aria-pressed={selected}
               aria-label={`${start}${free ? (selected ? ", selecionado" : ", disponível") : cell.state === "busy" ? ", ocupado" : cell.state === "pending" ? ", pendente" : ", indisponível"}`}
-              onKeyDown={(e) => {
-                if (!free) return;
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleTap(idx, e.shiftKey);
-                }
-              }}
-              className={`numeral relative flex h-12 items-center justify-center rounded-md border text-[0.9rem] font-medium transition-colors ${
-                selected
-                  ? "border-navy bg-navy text-text-on-dark"
-                  : `border-transparent ${STATE_CLS[cell.state]}`
+              onClick={(e) => free && onCellClick(idx, e)}
+              className={`relative flex h-12 items-center gap-3 border-b border-hairline pl-8 pr-3 text-left transition-colors last:border-b-0 ${
+                selected ? "bg-navy text-text-on-dark" : STATE_CLS[cell.state]
               } ${free ? "cursor-pointer" : "cursor-default"}`}
             >
-              {/* Brace motif hugging the run ends (design-system §5). */}
+              {/* Brace motif "hugging" the run on its left edge (design-system §5). */}
               {isRunStart && (
-                <span aria-hidden className="absolute -left-1 top-1/2 -translate-y-1/2 font-display text-base leading-none text-gold">
+                <span aria-hidden className="absolute left-1.5 top-1 font-display text-base leading-none text-gold">
                   {"{"}
                 </span>
               )}
               {isRunEnd && (
-                <span aria-hidden className="absolute -right-1 top-1/2 -translate-y-1/2 font-display text-base leading-none text-gold">
+                <span aria-hidden className="absolute bottom-1 left-1.5 font-display text-base leading-none text-gold">
                   {"}"}
                 </span>
               )}
-              <span className="inline-flex items-center gap-1">
-                {LockedIcon && <LockedIcon size={12} weight="bold" aria-hidden />}
+              <span className="numeral w-12 shrink-0 text-[0.95rem] font-medium tabular-nums">
                 {start}
+              </span>
+              <span className="ml-auto inline-flex items-center gap-1.5 text-xs">
+                <RightIcon size={13} weight="bold" aria-hidden />
+                {rightLabel}
               </span>
             </button>
           );
