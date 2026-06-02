@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+/*
+  Design tokens — derived verbatim from docs/design-system.md §6.
+  Tailwind v4 @theme: each entry also emits a :root CSS custom property,
+  so tokens are usable both as utilities (bg-navy, text-gold) and as var().
+  Fonts are wired through next/font (see layout.tsx); the documented
+  Nocturne/Apparat names stay in the stack as the licensed first choice,
+  with Fraunces/Hanken Grotesk as the loaded fallbacks.
+*/
+@theme {
+  /* Cores de marca */
+  --color-navy: #1d1a55;
+  --color-navy-90: #2a2770;
+  --color-navy-60: #5a5790;
+  --color-navy-30: #a9a7c4;
+  --color-red: #c21a26;
+  --color-gold: #a8966b;
+  --color-sky: #dbf0fa;
+
+  /* Superfícies */
+  --color-surface-0: #ffffff;
+  --color-surface-1: #eaf6fc;
+  --color-surface-2: #dbf0fa;
+  --color-hairline: #c5e3f0;
+
+  /* Texto */
+  --color-text-strong: #1d1a55;
+  --color-text-muted: #5a5790;
+  --color-text-on-dark: #dbf0fa;
+
+  /* Estados de disponibilidade */
+  --color-free-fill: #dcefe6;
+  --color-free-ink: #2e8b6b;
+  --color-pending-fill: #f3ead3;
+  --color-pending-ink: #b58a1e;
+  --color-busy-fill: #f7dee0;
+  --color-busy-ink: #c21a26;
+  --color-off-fill: #e3eaef;
+  --color-off-ink: #8a93a8;
+
+  /* Tipografia — Nocturne/Apparat são a 1.ª escolha licenciada; como não estão
+     carregadas, o browser cai para Fraunces/Hanken (via next/font). */
+  --font-display: "Nocturne Serif", var(--font-fraunces), Georgia, serif;
+  --font-body: "Apparat", var(--font-hanken), system-ui, sans-serif;
+  --font-music: var(--font-noto-music), serif;
+
+  /* Raio de canto (sóbrio) */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Sombras (subtis, tom navy) */
+  --shadow-sm: 0 1px 2px rgba(29, 26, 85, 0.08);
+  --shadow-md: 0 4px 12px rgba(29, 26, 85, 0.1);
+}
+
+:root {
+  color-scheme: light;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-surface-2);
+    color: var(--color-text-strong);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--color-text-strong);
+  }
+
+  /* Small institutional uppercase label, à imagem dos logos. */
+  .label-caps {
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  /* Tabular numerals for times in the grid. */
+  .numeral {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-navy);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+/*
+  Brace motif { } — a recurring brand element. Frames section titles and
+  "hugs" the selected block range in the schedule grid.
+*/
+.brace-frame {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.brace-frame::before,
+.brace-frame::after {
+  font-family: var(--font-display);
+  font-weight: 400;
+  color: var(--color-gold);
+  line-height: 1;
+}
+.brace-frame::before {
+  content: "{";
+}
+.brace-frame::after {
+  content: "}";
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
