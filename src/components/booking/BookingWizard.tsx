@@ -223,7 +223,7 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
           <div className="mb-4">
             <Legend />
           </div>
-          <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
+          <div className={`grid gap-6 ${summary ? "lg:grid-cols-[1fr_22rem]" : ""}`}>
             <TimeStep
               key={room.type === "any" ? "any" : room.id}
               blocks={blocks}
