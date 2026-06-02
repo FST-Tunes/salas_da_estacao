@@ -103,6 +103,24 @@
     outline-offset: 2px;
     border-radius: 2px;
   }
+
+  /* Anything clickable gets the hand cursor (Tailwind v4 preflight resets
+     buttons to the default arrow). Disabled controls show not-allowed. */
+  button,
+  [role="button"],
+  a[href],
+  label[for],
+  summary,
+  select,
+  [tabindex]:not([tabindex="-1"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"],
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
 
 /*

@@ -1,11 +1,10 @@
 "use client";
 
-import { useRef } from "react";
-import { Lock, Clock, MinusCircle, Check, HandTap, CursorClick } from "@phosphor-icons/react";
+import { Lock, Clock, MinusCircle, Check } from "@phosphor-icons/react";
 import type { SlotState } from "@/lib/types";
 import type { SlotCell } from "@/app/actions/availability";
 import { blockEnd } from "@/lib/time/blocks";
-import { dragRun, fillRun, type SlotRun } from "@/lib/time/selection";
+import type { SlotRun } from "@/lib/time/selection";
 
 const STATE_CLS: Record<SlotState, string> = {
   free: "bg-free-fill text-free-ink hover:brightness-[0.97]",
@@ -24,12 +23,13 @@ const LOCKED_ICON = { pending: Clock, busy: Lock, off: MinusCircle } as const;
  * mobile: 2 columns — 08–16, 16–24). Because the blocks are in chronological
  * order, a CSS column-major grid produces those buckets automatically.
  *
- * Selection stays a single contiguous run of free blocks (spec → consecutivity):
- *  - single click toggles — selects a free block, deselects a selected one
- *    (clicking another free block fills the range between; clicking inside the
- *    run trims it back toward the origin);
- *  - mouse drag extends, clamping at the first occupied block (the "wall").
- * Touch never starts a drag, so the page can scroll the grid freely.
+ * Selection is click-only (no dragging) and always a single contiguous run of
+ * free blocks (spec → consecutivity):
+ *  - with nothing selected, clicking a free block starts the run;
+ *  - clicking a free block adjacent to the run extends it;
+ *  - clicking a free block away from the run does nothing;
+ *  - clicking a selected end block removes it; clicking an interior block does
+ *    nothing (removing it would split the run).
  */
 export function TimeStep({
   blocks,
@@ -44,122 +44,33 @@ export function TimeStep({
   onSelectionChange: (run: SlotRun | null) => void;
   roomLabel: string;
 }) {
-  const gridRef = useRef<HTMLDivElement>(null);
-  const downRef = useRef(false);
-  const dragAnchorRef = useRef<number | null>(null);
-  const movedRef = useRef(false);
-  // Suppress the click that fires right after a committed mouse drag.
-  const justDraggedRef = useRef(false);
-  // Committed origin that clicks grow the run from / trim back toward.
-  const anchorRef = useRef<number | null>(null);
-
-  const cellIdxAt = (x: number, y: number): number | null => {
-    const el = document.elementFromPoint(x, y) as HTMLElement | null;
-    const chip = el?.closest<HTMLElement>("[data-slot]");
-    if (!chip) return null;
-    return Number(chip.dataset.slot);
-  };
-
   const handleClick = (i: number) => {
-    const anchor = anchorRef.current;
-    const isSelected = !!selection && i >= selection.lo && i <= selection.hi;
+    if (!selection) {
+      onSelectionChange({ lo: i, hi: i });
+      return;
+    }
+    const { lo, hi } = selection;
 
-    if (isSelected) {
-      // Toggle off: clicking the origin (or a single block) clears the run;
-      // clicking elsewhere in the run trims it back toward the origin.
-      if (anchor == null || i === anchor) {
-        anchorRef.current = null;
-        onSelectionChange(null);
-        return;
-      }
-      onSelectionChange(i > anchor ? { lo: anchor, hi: i - 1 } : { lo: i + 1, hi: anchor });
+    if (i >= lo && i <= hi) {
+      // A selected block: only the ends can be removed (an interior block stays,
+      // since dropping it would split the run).
+      if (lo === hi) onSelectionChange(null);
+      else if (i === lo) onSelectionChange({ lo: lo + 1, hi });
+      else if (i === hi) onSelectionChange({ lo, hi: hi - 1 });
       return;
     }
 
-    // A free, unselected block. Grow the contiguous run from the origin if every
-    // block between is free; otherwise restart the selection here (spec rule 2).
-    if (anchor != null) {
-      const run = fillRun(cells, anchor, i);
-      if (run) {
-        onSelectionChange(run);
-        return;
-      }
-    }
-    anchorRef.current = i;
-    onSelectionChange({ lo: i, hi: i });
-  };
-
-  // Mouse-only drag. Touch falls through to the native click so the page can
-  // still scroll the grid.
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType !== "mouse" || e.button !== 0) return;
-    const i = cellIdxAt(e.clientX, e.clientY);
-    if (i == null || cells[i]?.state !== "free") return;
-    downRef.current = true;
-    dragAnchorRef.current = i;
-    movedRef.current = false;
-    gridRef.current?.setPointerCapture(e.pointerId);
-  };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!downRef.current || dragAnchorRef.current == null) return;
-    const j = cellIdxAt(e.clientX, e.clientY);
-    if (j == null) return;
-    if (j !== dragAnchorRef.current) {
-      movedRef.current = true;
-      e.preventDefault(); // avoid text selection while dragging
-      onSelectionChange(dragRun(cells, dragAnchorRef.current, j));
-    }
-  };
-
-  const onPointerUp = (e: React.PointerEvent) => {
-    if (!downRef.current) return;
-    downRef.current = false;
-    try {
-      gridRef.current?.releasePointerCapture(e.pointerId);
-    } catch {
-      /* capture may already be gone */
-    }
-    if (movedRef.current && dragAnchorRef.current != null) {
-      anchorRef.current = dragAnchorRef.current; // clicks grow/trim from here
-      justDraggedRef.current = true; // swallow the trailing click
-    }
-  };
-
-  const onPointerCancel = () => {
-    downRef.current = false;
-  };
-
-  // Fires for taps (touch / mouse-without-drag) and keyboard activation.
-  const onCellClick = (idx: number) => {
-    if (justDraggedRef.current) {
-      justDraggedRef.current = false;
-      return;
-    }
-    handleClick(idx);
+    // An unselected block: only one immediately adjacent to the run extends it.
+    if (i === lo - 1) onSelectionChange({ lo: i, hi });
+    else if (i === hi + 1) onSelectionChange({ lo, hi: i });
+    // Anything further away does nothing.
   };
 
   return (
     <div className="space-y-4">
-      <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-muted">
-        <span className="inline-flex items-center gap-1.5">
-          <HandTap size={15} weight="bold" aria-hidden />
-          Toque para selecionar; toque de novo para remover
-        </span>
-        <span className="hidden items-center gap-1.5 sm:inline-flex">
-          <CursorClick size={15} weight="bold" aria-hidden />
-          No PC pode também arrastar para marcar um intervalo
-        </span>
-      </p>
-
       <div
-        ref={gridRef}
         role="grid"
         aria-label={`Horários para ${roomLabel}`}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerCancel}
         className="grid select-none grid-flow-col grid-rows-[repeat(16,minmax(0,1fr))] gap-2 lg:grid-rows-[repeat(8,minmax(0,1fr))]"
       >
         {blocks.map((start, idx) => {
@@ -177,7 +88,7 @@ export function TimeStep({
               disabled={!free}
               aria-pressed={selected}
               aria-label={`${start} a ${blockEnd(start)}${free ? (selected ? ", selecionado" : ", disponível") : cell.state === "busy" ? ", ocupado" : cell.state === "pending" ? ", pendente" : ", indisponível"}`}
-              onClick={() => free && onCellClick(idx)}
+              onClick={() => free && handleClick(idx)}
               className={`numeral flex h-12 items-center justify-center gap-1.5 rounded-md border text-xs font-medium tabular-nums transition-colors ${
                 selected
                   ? "border-navy bg-navy text-text-on-dark"
