@@ -1,37 +1,15 @@
 import { Header } from "@/components/brand/Header";
 import { Footer } from "@/components/brand/Footer";
 import { SectionTitle } from "@/components/brand/SectionTitle";
-import { Legend } from "@/components/schedule/Legend";
-import { DateNav } from "@/components/schedule/DateNav";
-import { BookingPlanner } from "@/components/schedule/BookingPlanner";
+import { BookingWizard } from "@/components/booking/BookingWizard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { getRooms, getSettings, getPublicBookingsForDate } from "@/lib/data/repository";
-import { buildGridModel } from "@/lib/grid";
-import type { DisplayCell } from "@/components/schedule/ScheduleGrid";
+import { getRooms, getSettings } from "@/lib/data/repository";
 import { todayISO, addDays } from "@/lib/time/dates";
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ date?: string }>;
-}) {
-  const { date: dateParam } = await searchParams;
+export default async function HomePage() {
   const today = todayISO();
   const [settings, rooms] = await Promise.all([getSettings(), getRooms()]);
   const maxDate = addDays(today, settings.maxAdvanceDays);
-
-  // Clamp the requested date to [today, today + maxAdvanceDays].
-  let date = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : today;
-  if (date < today) date = today;
-  if (date > maxDate) date = maxDate;
-
-  const bookings = await getPublicBookingsForDate(date);
-  const model = buildGridModel(rooms, bookings, settings, date);
-
-  const anyCells: DisplayCell[] = model.anyCells.map((c) => ({
-    state: c.state,
-    label: c.freeCount > 0 ? `${c.freeCount} ${c.freeCount === 1 ? "livre" : "livres"}` : null,
-  }));
 
   return (
     <div className="flex min-h-[100dvh] flex-col">
@@ -44,15 +22,10 @@ export default async function HomePage({
             Reservar
           </SectionTitle>
           <p className="mt-3 text-text-muted">
-            Consulte a disponibilidade das salas e submeta o seu pedido. Os horários organizam-se em
-            blocos de 30 minutos.
+            Em quatro passos: escolha o dia, a sala, o horário em blocos de 30 minutos e deixe os
+            seus dados. O pedido fica pendente até aprovação.
           </p>
         </section>
-
-        <div className="mb-5 flex flex-col gap-4 border-b border-hairline pb-5">
-          <DateNav date={date} minDate={today} maxDate={maxDate} />
-          <Legend />
-        </div>
 
         {rooms.length === 0 ? (
           <EmptyState
@@ -60,13 +33,7 @@ export default async function HomePage({
             description="O administrador precisa de adicionar salas antes de aceitar reservas."
           />
         ) : (
-          <BookingPlanner
-            date={date}
-            rooms={rooms.map((r) => ({ id: r.id, name: r.name }))}
-            blocks={model.blocks}
-            roomCells={model.roomCells}
-            anyCells={anyCells}
-          />
+          <BookingWizard today={today} maxDate={maxDate} />
         )}
       </main>
 
