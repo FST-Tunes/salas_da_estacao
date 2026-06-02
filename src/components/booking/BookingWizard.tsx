@@ -42,6 +42,9 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  // Mobile only: gates the name/phone form behind a "Selecionar" confirmation
+  // so picking a slot doesn't immediately cover the grid and block more picks.
+  const [timeConfirmed, setTimeConfirmed] = useState(false);
   const [pending, startTransition] = useTransition();
 
   // ── Derived view data ───────────────────────────────────────────────────────
@@ -60,6 +63,7 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
     setError(null);
     setRoom(null);
     setSelection(null);
+    setTimeConfirmed(false);
     const data = await getDayAvailability(iso);
     setAvail(data);
     setDate(data.date);
@@ -70,12 +74,20 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
   function pickRoom(choice: RoomChoice) {
     setRoom(choice);
     setSelection(null);
+    setTimeConfirmed(false);
     setError(null);
     setScreen(3);
   }
 
+  // Clearing the selection drops back out of the confirmed (name/phone) state.
+  function changeSelection(run: SlotRun | null) {
+    setSelection(run);
+    if (!run) setTimeConfirmed(false);
+  }
+
   function jumpTo(step: number) {
     setError(null);
+    setTimeConfirmed(false);
     if (step === 1) {
       setScreen(1);
     } else if (step === 2) {
@@ -123,6 +135,7 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
     setPhone("");
     setError(null);
     setDone(false);
+    setTimeConfirmed(false);
   }
 
   // ── Stepper model ────────────────────────────────────────────────────────────
@@ -216,12 +229,13 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
               blocks={blocks}
               cells={columnCells}
               selection={selection}
-              onSelectionChange={setSelection}
+              onSelectionChange={changeSelection}
               roomLabel={roomName}
             />
+            {/* Desktop: sticky side panel — never covers the grid. */}
             {summary && (
-              <aside className="z-30 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 lg:sticky lg:top-20 lg:self-start">
-                <div className="max-h-[72vh] overflow-y-auto rounded-t-xl border border-hairline bg-surface-0 p-5 shadow-md max-lg:rounded-b-none lg:rounded-lg lg:shadow-sm">
+              <aside className="z-30 hidden lg:sticky lg:top-20 lg:block lg:self-start">
+                <div className="rounded-lg border border-hairline bg-surface-0 p-5 shadow-sm">
                   <h3 className="mb-3 font-display text-lg text-navy">O seu pedido</h3>
                   <CheckoutPanel
                     summary={summary}
@@ -237,8 +251,47 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
               </aside>
             )}
           </div>
-          {/* Spacer so the mobile bottom sheet never hides the last chips. */}
-          {summary && <div aria-hidden className="h-4 lg:hidden" />}
+
+          {/* Mobile: while a slot is selected but not confirmed, show a floating
+              "Selecionar" bar so the user can keep picking more slots. */}
+          {summary && !timeConfirmed && (
+            <div className="fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface-0 p-4 shadow-md lg:hidden">
+              <Button onClick={() => setTimeConfirmed(true)} className="w-full">
+                Selecionar · {summary.rangeLabel}
+              </Button>
+            </div>
+          )}
+
+          {/* Mobile: only after confirming does the name/phone sheet appear. */}
+          {summary && timeConfirmed && (
+            <aside className="fixed inset-x-0 bottom-0 z-30 lg:hidden">
+              <div className="max-h-[80vh] overflow-y-auto rounded-t-xl border border-hairline bg-surface-0 p-5 shadow-md">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="font-display text-lg text-navy">O seu pedido</h3>
+                  <button
+                    type="button"
+                    onClick={() => setTimeConfirmed(false)}
+                    className="text-sm text-text-muted underline underline-offset-2"
+                  >
+                    Alterar horário
+                  </button>
+                </div>
+                <CheckoutPanel
+                  summary={summary}
+                  name={name}
+                  phone={phone}
+                  onNameChange={setName}
+                  onPhoneChange={setPhone}
+                  onSubmit={submit}
+                  pending={pending}
+                  error={error}
+                />
+              </div>
+            </aside>
+          )}
+
+          {/* Spacer so the fixed mobile bottom UI never hides the last chips. */}
+          {summary && <div aria-hidden className="h-24 lg:hidden" />}
         </StepShell>
       )}
     </div>
