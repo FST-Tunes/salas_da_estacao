@@ -28,8 +28,9 @@ const LOCKED_ICON = { pending: Clock, busy: Lock, off: MinusCircle } as const;
  *  - with nothing selected, clicking a free block starts the run;
  *  - clicking a free block outside the run extends it toward that block,
  *    provided every block in the gap is also free (can't jump over blocked slots);
- *  - clicking a selected end block removes it; clicking an interior block does
- *    nothing (removing it would split the run).
+ *  - clicking a selected end block (or a single selected block) clears the run;
+ *  - clicking an interior selected block trims the smaller side: the clicked
+ *    block becomes the new boundary on whichever end was closer.
  */
 export function TimeStep({
   blocks,
@@ -52,11 +53,16 @@ export function TimeStep({
     const { lo, hi } = selection;
 
     if (i >= lo && i <= hi) {
-      // A selected block: only the ends can be removed (an interior block stays,
-      // since dropping it would split the run).
-      if (lo === hi) onSelectionChange(null);
-      else if (i === lo) onSelectionChange({ lo: lo + 1, hi });
-      else if (i === hi) onSelectionChange({ lo, hi: hi - 1 });
+      if (lo === hi || i === lo || i === hi) {
+        // Single block, or clicking either end: clear the selection entirely.
+        onSelectionChange(null);
+      } else {
+        // Interior block: keep it and trim the smaller side.
+        // Whichever end is closer becomes the new boundary at i.
+        const distToLo = i - lo;
+        const distToHi = hi - i;
+        onSelectionChange(distToHi <= distToLo ? { lo, hi: i } : { lo: i, hi });
+      }
       return;
     }
 
