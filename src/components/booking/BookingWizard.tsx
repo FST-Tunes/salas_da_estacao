@@ -64,11 +64,11 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
     setRoom(null);
     setSelection(null);
     setTimeConfirmed(false);
+    setScreen(2);
     const data = await getDayAvailability(iso);
     setAvail(data);
     setDate(data.date);
     setLoading(false);
-    setScreen(2);
   }
 
   function pickRoom(choice: RoomChoice) {
