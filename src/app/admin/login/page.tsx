@@ -18,8 +18,8 @@ export default function LoginPage() {
     <div className="flex min-h-[100dvh] flex-col">
       <Header />
 
-      <main className="mx-auto flex w-full max-w-[1200px] flex-1 items-start px-4 py-12 sm:px-6">
-        <div className="w-full max-w-sm">
+      <main className="mx-auto flex w-full max-w-[1200px] flex-1 items-center justify-center px-4 py-12 sm:px-6">
+        <div className="w-full max-w-sm rounded-lg border border-hairline bg-surface-0 p-8 shadow-md">
           <h1 className="font-display text-2xl text-navy">Área reservada</h1>
           <p className="mt-1 mb-6 text-sm text-text-muted">Gestão de reservas · EMM</p>
 
