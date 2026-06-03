@@ -26,8 +26,8 @@ const LOCKED_ICON = { pending: Clock, busy: Lock, off: MinusCircle } as const;
  * Selection is click-only (no dragging) and always a single contiguous run of
  * free blocks (spec → consecutivity):
  *  - with nothing selected, clicking a free block starts the run;
- *  - clicking a free block adjacent to the run extends it;
- *  - clicking a free block away from the run does nothing;
+ *  - clicking a free block outside the run extends it toward that block,
+ *    provided every block in the gap is also free (can't jump over blocked slots);
  *  - clicking a selected end block removes it; clicking an interior block does
  *    nothing (removing it would split the run).
  */
@@ -60,10 +60,13 @@ export function TimeStep({
       return;
     }
 
-    // An unselected block: only one immediately adjacent to the run extends it.
-    if (i === lo - 1) onSelectionChange({ lo: i, hi });
-    else if (i === hi + 1) onSelectionChange({ lo, hi: i });
-    // Anything further away does nothing.
+    // An unselected block: extend the run towards it, but only if every block
+    // in the gap is free (can't jump over busy/pending/off blocks).
+    const [gapStart, gapEnd] = i < lo ? [i, lo - 1] : [hi + 1, i];
+    const gapAllFree = cells.slice(gapStart, gapEnd + 1).every((c) => c.state === "free");
+    if (!gapAllFree) return;
+
+    onSelectionChange(i < lo ? { lo: i, hi } : { lo, hi: i });
   };
 
   return (
