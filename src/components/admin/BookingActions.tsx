@@ -142,9 +142,6 @@ export function BookingActions({ booking, effective, rooms, blocks }: Props) {
           <Button size="sm" variant="destructive" disabled={pending} onClick={() => run(() => rejectAction(booking.id))}>
             <X size={15} weight="bold" /> Rejeitar
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>
-            <PencilSimple size={15} weight="bold" /> Editar
-          </Button>
         </>
       )}
 
