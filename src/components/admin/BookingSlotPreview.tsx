@@ -1,0 +1,176 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { CircleNotch, Warning, Check, X } from "@phosphor-icons/react";
+import type { Booking, SlotState } from "@/lib/types";
+import { getDayAvailability, type DayAvailability, type SlotCell } from "@/app/actions/availability";
+import { blockEnd, toMinutes } from "@/lib/time/blocks";
+import { STATE_CLS, LOCKED_ICON } from "@/components/schedule/slotVisuals";
+import { Legend } from "@/components/schedule/Legend";
+
+interface Props {
+  booking: Pick<Booking, "date" | "startTime" | "endTime" | "roomId">;
+  rooms: { id: string; name: string }[];
+}
+
+/**
+ * Read-only slot view for a single booking's day, shown when an admin expands a
+ * request card. The requested time range is marked as the "user selection":
+ *  - in the booking's own room, filled navy (the wizard's selection visual);
+ *  - in any other room, the room's real free/busy state shows through, hugged by
+ *    the brace motif so the admin can judge whether the request fits there.
+ * Switching rooms re-renders that room's slots for the same day. This is the
+ * key tool for "qualquer sala" requests (roomId === null), where the admin must
+ * find a free room before assigning one on approval.
+ */
+export function BookingSlotPreview({ booking, rooms }: Props) {
+  const [selectedRoom, setSelectedRoom] = useState(booking.roomId ?? rooms[0]?.id ?? "");
+  const [avail, setAvail] = useState<DayAvailability | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    setError(null);
+    getDayAvailability(booking.date)
+      .then((data) => {
+        if (alive) setAvail(data);
+      })
+      .catch(() => {
+        if (alive) setError("Não foi possível carregar a disponibilidade.");
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [booking.date]);
+
+  if (loading) {
+    return (
+      <p className="mt-3 flex items-center gap-2 text-sm text-text-muted">
+        <CircleNotch size={15} weight="bold" className="animate-spin" aria-hidden />
+        A carregar disponibilidade…
+      </p>
+    );
+  }
+
+  if (error || !avail) {
+    return (
+      <p className="mt-3 flex items-center gap-2 text-sm text-busy-ink">
+        <Warning size={14} weight="bold" aria-hidden />
+        {error ?? "Sem dados de disponibilidade."}
+      </p>
+    );
+  }
+
+  // getDayAvailability clamps to the public window [hoje, hoje+maxAdvanceDays].
+  // If it returned a different day, the request falls outside that window — show
+  // the request's own data is unavailable rather than the wrong day's slots.
+  if (avail.date !== booking.date) {
+    return (
+      <p className="mt-3 flex items-center gap-2 text-sm text-busy-ink">
+        <Warning size={14} weight="bold" aria-hidden />
+        Esta data está fora da janela de disponibilidade pública.
+      </p>
+    );
+  }
+
+  const { blocks } = avail;
+  const room = avail.rooms.find((r) => r.id === selectedRoom);
+  const cells: SlotCell[] = room?.cells ?? [];
+  const ownRoom = booking.roomId != null && selectedRoom === booking.roomId;
+
+  const selStart = toMinutes(booking.startTime);
+  const selEnd = toMinutes(booking.endTime);
+  const inSelection = (start: string) => {
+    const m = toMinutes(start);
+    return m >= selStart && m < selEnd;
+  };
+
+  // Fit check (only meaningful for a room that isn't the one already holding the
+  // booking): are all the requested blocks free in this room?
+  const selectionFree = blocks.every(
+    (start, idx) => !inSelection(start) || cells[idx]?.state === "free",
+  );
+
+  return (
+    <div className="mt-3 space-y-3 rounded-md border border-hairline bg-surface-1 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <label className="flex items-center gap-2 text-xs text-text-muted">
+          Sala
+          <select
+            value={selectedRoom}
+            onChange={(e) => setSelectedRoom(e.target.value)}
+            className="rounded-sm border border-navy/20 bg-surface-0 px-2 py-1.5 text-sm text-navy"
+          >
+            {rooms.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+        </label>
+
+        {!ownRoom &&
+          (selectionFree ? (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-free-ink">
+              <Check size={13} weight="bold" aria-hidden /> Livre nesta sala
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-busy-ink">
+              <X size={13} weight="bold" aria-hidden /> Em conflito nesta sala
+            </span>
+          ))}
+      </div>
+
+      <div
+        role="grid"
+        aria-label={`Horários de ${room?.name ?? "sala"} em ${booking.date}`}
+        className="grid grid-flow-col grid-rows-[repeat(16,minmax(0,1fr))] gap-2 lg:grid-rows-[repeat(8,minmax(0,1fr))]"
+      >
+        {blocks.map((start, idx) => {
+          const cell = cells[idx] ?? { state: "off" as SlotState, label: null };
+          const selected = inSelection(start);
+          const free = cell.state === "free";
+          const LockedIcon = free ? null : LOCKED_ICON[cell.state as "pending" | "busy" | "off"];
+
+          // Own room → solid navy selection (matches the booking wizard).
+          // Other room → keep real state, hug with a navy brace ring so the
+          // underlying free/busy stays readable.
+          const cls = selected
+            ? ownRoom
+              ? "border-navy bg-navy text-text-on-dark"
+              : `border-navy ${STATE_CLS[cell.state]} ring-1 ring-navy`
+            : `border-transparent ${STATE_CLS[cell.state]}`;
+
+          return (
+            <div
+              key={start}
+              role="gridcell"
+              aria-label={`${start} a ${blockEnd(start)}${
+                selected ? ", pedido" : free ? ", disponível" : cell.state === "busy" ? ", ocupado" : cell.state === "pending" ? ", pendente" : ", indisponível"
+              }`}
+              className={`numeral relative flex h-12 items-center justify-center gap-1.5 rounded-md border text-xs font-medium tabular-nums ${cls}`}
+            >
+              {selected && !ownRoom && (
+                <>
+                  <span className="absolute left-1 font-display text-base text-navy" aria-hidden>{`{`}</span>
+                  <span className="absolute right-1 font-display text-base text-navy" aria-hidden>{`}`}</span>
+                </>
+              )}
+              {selected && ownRoom ? (
+                <Check size={12} weight="bold" aria-hidden />
+              ) : (
+                LockedIcon && <LockedIcon size={12} weight="bold" aria-hidden />
+              )}
+              {`${start} – ${blockEnd(start)}`}
+            </div>
+          );
+        })}
+      </div>
+
+      <Legend />
+    </div>
+  );
+}

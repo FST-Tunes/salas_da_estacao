@@ -1,21 +1,11 @@
 "use client";
 
-import { Lock, Clock, MinusCircle, Check } from "@phosphor-icons/react";
+import { Check } from "@phosphor-icons/react";
 import type { SlotState } from "@/lib/types";
 import type { SlotCell } from "@/app/actions/availability";
 import { blockEnd } from "@/lib/time/blocks";
 import type { SlotRun } from "@/lib/time/selection";
-
-const STATE_CLS: Record<SlotState, string> = {
-  free: "bg-free-fill text-free-ink hover:brightness-[0.97]",
-  pending: "bg-pending-fill text-pending-ink",
-  busy: "bg-busy-fill text-busy-ink",
-  off: "bg-off-fill text-off-ink",
-};
-
-// Icon per non-free state — never colour alone (design-system §3). Free blocks
-// carry no icon (their distinguishing cue is the absence of a lock/clock/minus).
-const LOCKED_ICON = { pending: Clock, busy: Lock, off: MinusCircle } as const;
+import { STATE_CLS, LOCKED_ICON } from "@/components/schedule/slotVisuals";
 
 /**
  * Step 3 — slot picker. Blocks are laid out in time-of-day columns read
@@ -105,7 +95,7 @@ export function TimeStep({
               className={`numeral flex h-12 items-center justify-center gap-1.5 rounded-md border text-xs font-medium tabular-nums transition-colors ${
                 selected
                   ? "border-navy bg-navy text-text-on-dark"
-                  : `border-transparent ${STATE_CLS[cell.state]}`
+                  : `border-transparent ${STATE_CLS[cell.state]}${free ? " hover:brightness-[0.97]" : ""}`
               } ${free ? "cursor-pointer" : "cursor-default"}`}
             >
               {selected ? (
