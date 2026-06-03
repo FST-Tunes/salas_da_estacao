@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { SignOut } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/brand/Logo";
 import { AdminNav } from "@/components/admin/AdminNav";
@@ -6,6 +7,9 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = (await headers()).get("x-current-path") ?? "";
+  if (pathname === "/admin/login") return <>{children}</>;
+
   let email: string | null = null;
   if (isSupabaseConfigured) {
     const sb = await createSupabaseServerClient();
@@ -25,12 +29,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <span className="hidden font-display text-navy sm:inline">Gestão</span>
           </div>
           <div className="flex items-center gap-3">
-            {email ? (
+            {email && (
               <span className="hidden text-sm text-text-muted sm:inline">{email}</span>
-            ) : (
-              <span className="hidden rounded-sm bg-pending-fill px-2 py-0.5 text-xs text-pending-ink sm:inline">
-                Demonstração
-              </span>
             )}
             <form action={signOutAction}>
               <button
