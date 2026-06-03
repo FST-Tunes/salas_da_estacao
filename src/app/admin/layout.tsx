@@ -1,4 +1,5 @@
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { SignOut } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "@/components/brand/Logo";
 import { AdminNav } from "@/components/admin/AdminNav";
@@ -16,7 +17,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const {
       data: { user },
     } = await sb.auth.getUser();
-    email = user?.email ?? null;
+    if (!user) redirect("/admin/login");
+    email = user.email ?? null;
+  } else {
+    const jar = await cookies();
+    if (jar.get("demo-auth")?.value !== "1") redirect("/admin/login");
   }
 
   return (
