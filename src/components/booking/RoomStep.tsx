@@ -49,28 +49,41 @@ function FloorRoomButton({
           : `${room.name}, ${freeTimeLabel(room.freeBlocks)}`
       }
       style={colSpan ? { gridColumn: `span ${colSpan}` } : undefined}
-      className={`group flex min-h-[8rem] flex-col items-center justify-center gap-1.5 rounded-md border px-2 py-3 text-center transition-all ${
+      className={`group relative flex min-h-[8rem] flex-col justify-between overflow-hidden rounded-lg border p-3 text-left transition-all duration-200 ${
         soldOut
-          ? "cursor-default border-hairline bg-surface-1/40 opacity-50"
-          : "border-hairline bg-surface-0 hover:border-navy hover:bg-navy hover:shadow-md"
+          ? "cursor-default border-hairline bg-surface-1/50 opacity-50"
+          : "border-hairline bg-surface-0 shadow-sm hover:border-navy/60 hover:bg-navy hover:shadow-lg"
       }`}
     >
+      {/* Availability accent bar — top edge */}
+      {!soldOut && (
+        <span
+          className={`absolute inset-x-0 top-0 h-[3px] rounded-t-lg ${t.dot} opacity-70 group-hover:opacity-0 transition-opacity`}
+          aria-hidden
+        />
+      )}
+
+      {/* Room name */}
       <span
-        className={`font-display text-xs leading-tight ${
+        className={`font-display text-sm font-medium leading-snug ${
           soldOut ? "text-text-muted" : "text-navy group-hover:text-text-on-dark"
         }`}
       >
         {room.name}
       </span>
-      {soldOut ? (
-        <span className="text-[0.6rem] font-medium text-off-ink">Esgotada</span>
-      ) : (
-        <span
-          title={t.label}
-          className={`block h-1 w-6 rounded-full ${t.dot} opacity-80 group-hover:opacity-40`}
-          aria-hidden
-        />
-      )}
+
+      {/* Bottom: availability info */}
+      <span className="mt-auto block">
+        {soldOut ? (
+          <span className="inline-flex items-center gap-1 rounded-sm bg-off-fill px-1.5 py-0.5 text-[0.65rem] font-medium text-off-ink">
+            Esgotada
+          </span>
+        ) : (
+          <span className={`text-[0.72rem] font-medium ${t.text} group-hover:text-text-on-dark/70 transition-colors`}>
+            {freeTimeLabel(room.freeBlocks)}
+          </span>
+        )}
+      </span>
     </button>
   );
 }
