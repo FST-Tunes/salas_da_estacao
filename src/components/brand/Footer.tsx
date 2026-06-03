@@ -14,12 +14,6 @@ export function Footer() {
           className="h-11 w-auto opacity-90"
         />
         <p className="label-caps">Estação Musical de Monção</p>
-        <p className="max-w-sm text-sm text-text-muted">
-          Salas de ensaio. Consulte a disponibilidade e submeta o seu pedido de reserva.
-        </p>
-        <p className="text-xs text-navy-30">
-          {new Date().getFullYear()} · Antiga Estação Ferroviária de Monção
-        </p>
       </div>
     </footer>
   );

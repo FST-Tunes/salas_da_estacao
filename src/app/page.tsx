@@ -21,10 +21,6 @@ export default async function HomePage() {
           <SectionTitle as="h1" className="text-3xl sm:text-4xl text-navy">
             Reservar
           </SectionTitle>
-          <p className="mt-3 text-text-muted">
-            Em quatro passos: escolha o dia, a sala, o horário em blocos de 30 minutos e deixe os
-            seus dados. O pedido fica pendente até aprovação.
-          </p>
         </section>
 
         {rooms.length === 0 ? (

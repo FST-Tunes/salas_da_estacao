@@ -128,12 +128,6 @@ export function RoomStep({
           onClick={() => onPick({ type: "any" })}
           className="group relative flex w-full items-center gap-4 overflow-hidden rounded-xl border border-gold/40 bg-gradient-to-br from-gold/10 to-gold/[0.03] p-5 text-left transition-all hover:border-gold/60 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
         >
-          <span
-            aria-hidden
-            className="pointer-events-none absolute -right-4 -top-4 font-display text-7xl leading-none text-gold/10 select-none"
-          >
-            {"}"}
-          </span>
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gold/15 text-gold">
             <Stack size={24} weight="bold" aria-hidden />
           </span>
@@ -171,12 +165,6 @@ export function RoomStep({
             }
             className="group relative flex w-full items-center gap-4 overflow-hidden rounded-xl border border-navy/20 bg-gradient-to-br from-navy/5 to-navy/[0.02] p-5 text-left transition-all hover:border-navy/40 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
           >
-            <span
-              aria-hidden
-              className="pointer-events-none absolute -right-4 -top-4 font-display text-7xl leading-none text-navy/5 select-none"
-            >
-              {"{"}
-            </span>
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-navy/10 text-navy group-hover:bg-navy group-hover:text-text-on-dark transition-colors">
               <Door size={24} weight="bold" aria-hidden />
             </span>
