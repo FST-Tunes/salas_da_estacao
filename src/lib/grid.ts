@@ -78,3 +78,69 @@ export function buildGridModel(
 
   return { blocks, roomCells, anyCells };
 }
+
+export interface RoomWeekCell {
+  state: SlotState;
+  /** Booker / event name on the first block of a run; null otherwise. */
+  label: string | null;
+  /** True when the occupying booking belongs to a recurring series. */
+  recurring: boolean;
+}
+
+export interface RoomWeekDay {
+  date: string;
+  cells: RoomWeekCell[];
+}
+
+export interface RoomWeekModel {
+  blocks: string[];
+  days: RoomWeekDay[];
+}
+
+/**
+ * Weekly schedule for a single room: for each day in `weekDates` and each
+ * 30-min block, the slot state plus — on the first block of a run — the booker
+ * name and whether it is part of a recurring series. Reuses the same domain
+ * primitives as the daily grid so the two views never drift.
+ */
+export function buildRoomWeekModel(
+  roomId: string,
+  bookings: Booking[],
+  settings: { openTime: string; closeTime: string },
+  weekDates: string[],
+  now: Date = new Date(),
+): RoomWeekModel {
+  const blocks = blockStarts(settings.openTime, settings.closeTime);
+  const today = todayISO();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const days: RoomWeekDay[] = weekDates.map((date) => {
+    const dayBookings = bookings.filter((b) => b.date === date && b.roomId === roomId);
+    const isToday = date === today;
+    const isPastDay = date < today;
+
+    const cells: RoomWeekCell[] = blocks.map((start) => {
+      const end = blockEnd(start);
+      const isPast = isPastDay || (isToday && toMinutes(end) <= nowMinutes);
+      const state = slotStateFor(dayBookings, roomId, start, end, { isPast, now });
+      let label: string | null = null;
+      let recurring = false;
+      if (state === "busy" || state === "pending") {
+        const owner = dayBookings.find(
+          (b) =>
+            (effectiveState(b, now) === "aprovada" || effectiveState(b, now) === "pendente") &&
+            b.startTime === start,
+        );
+        if (owner) {
+          label = owner.bookerName;
+          recurring = owner.recurrenceId !== null;
+        }
+      }
+      return { state, label, recurring };
+    });
+
+    return { date, cells };
+  });
+
+  return { blocks, days };
+}

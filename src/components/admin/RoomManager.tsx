@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FloppyDisk, EyeSlash, ArrowCounterClockwise, Door } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/Button";
+import { Plus, FloppyDisk, EyeSlash, ArrowCounterClockwise, Door, CalendarBlank } from "@phosphor-icons/react";
+import { Button, LinkButton } from "@/components/ui/Button";
 import {
   createRoomAction,
   renameRoomAction,
@@ -83,6 +83,9 @@ function RoomRow({ room, onChange }: { room: Room; onChange: () => void }) {
         disabled={!room.active}
         className="min-w-0 flex-1 rounded-sm border border-transparent bg-transparent px-2 py-1.5 text-navy outline-none hover:border-navy/20 focus:border-navy disabled:text-text-muted"
       />
+      <LinkButton size="sm" variant="secondary" href={`/admin/salas/${room.id}`}>
+        <CalendarBlank size={14} weight="bold" /> Ver horário
+      </LinkButton>
       {room.active ? (
         <>
           <Button size="sm" variant="secondary" disabled={!dirty || pending} onClick={() => act(() => renameRoomAction(room.id, name))}>

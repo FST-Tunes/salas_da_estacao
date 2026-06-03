@@ -162,6 +162,21 @@ export async function getBookingsForDate(date: string): Promise<Booking[]> {
   return (data ?? []).map(mapBooking);
 }
 
+/** Admin read: every booking (all states) whose date is in [from, to]. */
+export async function getBookingsInRange(from: string, to: string): Promise<Booking[]> {
+  if (!isSupabaseConfigured) {
+    return demoStore.bookings.filter((b) => b.date >= from && b.date <= to);
+  }
+  const sb = createSupabaseAdminClient();
+  const { data } = await sb
+    .from("bookings")
+    .select("*")
+    .gte("date", from)
+    .lte("date", to)
+    .order("start_time");
+  return (data ?? []).map(mapBooking);
+}
+
 export async function getBookingById(id: string): Promise<Booking | null> {
   if (!isSupabaseConfigured) {
     return demoStore.bookings.find((b) => b.id === id) ?? null;

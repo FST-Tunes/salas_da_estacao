@@ -34,6 +34,19 @@ export function weekdayOf(iso: string): number {
   return fromISODate(iso).getDay();
 }
 
+/** Monday of the week containing `iso` (weeks start Monday, pt-PT convention). */
+export function startOfWeekISO(iso: string): string {
+  const day = weekdayOf(iso); // 0 = Sunday … 6 = Saturday
+  const sinceMonday = (day + 6) % 7; // Monday → 0, Sunday → 6
+  return addDays(iso, -sinceMonday);
+}
+
+/** The 7 ISO dates (Monday → Sunday) of the week containing `iso`. */
+export function weekDates(iso: string): string[] {
+  const start = startOfWeekISO(iso);
+  return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+}
+
 const LONG = new Intl.DateTimeFormat("pt-PT", {
   weekday: "long",
   day: "numeric",
