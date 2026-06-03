@@ -6,7 +6,7 @@ Desenvolver uma aplicação web para gerir as reservas das salas da Estação mu
 
 A aplicação deverá permitir que qualquer pessoa consulte a disponibilidade das salas e submeta pedidos de reserva, enquanto um administrador poderá aprovar, rejeitar e gerir esses pedidos.
 
----
+----
 
 # Salas
 
