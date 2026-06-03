@@ -49,7 +49,7 @@ function FloorRoomButton({
           : `${room.name}, ${freeTimeLabel(room.freeBlocks)}`
       }
       style={colSpan ? { gridColumn: `span ${colSpan}` } : undefined}
-      className={`group flex min-h-[4rem] flex-col items-center justify-center gap-1.5 rounded-md border px-2 py-3 text-center transition-all ${
+      className={`group flex min-h-[8rem] flex-col items-center justify-center gap-1.5 rounded-md border px-2 py-3 text-center transition-all ${
         soldOut
           ? "cursor-default border-hairline bg-surface-1/40 opacity-50"
           : "border-hairline bg-surface-0 hover:border-navy hover:bg-navy hover:shadow-md"
