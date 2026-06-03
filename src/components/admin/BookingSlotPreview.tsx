@@ -10,7 +10,8 @@ import { Legend } from "@/components/schedule/Legend";
 
 interface Props {
   booking: Pick<Booking, "date" | "startTime" | "endTime" | "roomId">;
-  rooms: { id: string; name: string }[];
+  /** Room to show, driven by the assignment dropdown in the actions below. */
+  selectedRoom: string;
 }
 
 /**
@@ -19,12 +20,11 @@ interface Props {
  *  - in the booking's own room, filled navy (the wizard's selection visual);
  *  - in any other room, the room's real free/busy state shows through, hugged by
  *    the brace motif so the admin can judge whether the request fits there.
- * Switching rooms re-renders that room's slots for the same day. This is the
- * key tool for "qualquer sala" requests (roomId === null), where the admin must
- * find a free room before assigning one on approval.
+ * The room is chosen via the assignment dropdown in the actions row, so for
+ * "qualquer sala" requests (roomId === null) picking a room there immediately
+ * shows that room's availability for the same day.
  */
-export function BookingSlotPreview({ booking, rooms }: Props) {
-  const [selectedRoom, setSelectedRoom] = useState(booking.roomId ?? rooms[0]?.id ?? "");
+export function BookingSlotPreview({ booking, selectedRoom }: Props) {
   const [avail, setAvail] = useState<DayAvailability | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,18 +99,9 @@ export function BookingSlotPreview({ booking, rooms }: Props) {
   return (
     <div className="mt-3 space-y-3 rounded-md border border-hairline bg-surface-1 p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <label className="flex items-center gap-2 text-xs text-text-muted">
-          Sala
-          <select
-            value={selectedRoom}
-            onChange={(e) => setSelectedRoom(e.target.value)}
-            className="rounded-sm border border-navy/20 bg-surface-0 px-2 py-1.5 text-sm text-navy"
-          >
-            {rooms.map((r) => (
-              <option key={r.id} value={r.id}>{r.name}</option>
-            ))}
-          </select>
-        </label>
+        <span className="text-xs font-medium text-navy">
+          {room?.name ?? "Sala"} · {booking.startTime}–{booking.endTime}
+        </span>
 
         {!ownRoom &&
           (selectionFree ? (

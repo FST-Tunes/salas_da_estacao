@@ -35,6 +35,9 @@ export function BookingCard({
   expandable = false,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
+  // Shared between the assignment dropdown (in the actions) and the slot
+  // preview, so picking a room there shows that room's availability.
+  const [selectedRoom, setSelectedRoom] = useState(booking.roomId ?? activeRooms[0]?.id ?? "");
 
   const info = (
     <div className="min-w-0 space-y-1.5">
@@ -104,11 +107,18 @@ export function BookingCard({
       </div>
 
       {expandable && expanded && (
-        <BookingSlotPreview booking={booking} rooms={activeRooms} />
+        <BookingSlotPreview booking={booking} selectedRoom={selectedRoom} />
       )}
 
       {showActions && (effective === "pendente" || effective === "aprovada") && (
-        <BookingActions booking={booking} effective={effective} rooms={activeRooms} blocks={blocks} />
+        <BookingActions
+          booking={booking}
+          effective={effective}
+          rooms={activeRooms}
+          blocks={blocks}
+          assignRoom={selectedRoom}
+          onAssignRoomChange={setSelectedRoom}
+        />
       )}
     </li>
   );

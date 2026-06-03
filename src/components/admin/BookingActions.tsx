@@ -18,13 +18,26 @@ interface Props {
   effective: BookingState;
   rooms: { id: string; name: string }[];
   blocks: string[];
+  /** Optionally lift the selected room so a sibling (the slot preview) can react
+   *  to it. When omitted, the component keeps its own room state. */
+  assignRoom?: string;
+  onAssignRoomChange?: (id: string) => void;
 }
 
-export function BookingActions({ booking, effective, rooms, blocks }: Props) {
+export function BookingActions({
+  booking,
+  effective,
+  rooms,
+  blocks,
+  assignRoom: controlledRoom,
+  onAssignRoomChange,
+}: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
-  const [assignRoom, setAssignRoom] = useState(booking.roomId ?? rooms[0]?.id ?? "");
+  const [localRoom, setLocalRoom] = useState(booking.roomId ?? rooms[0]?.id ?? "");
+  const assignRoom = controlledRoom ?? localRoom;
+  const setAssignRoom = onAssignRoomChange ?? setLocalRoom;
   const [start, setStart] = useState(booking.startTime);
   const [end, setEnd] = useState(booking.endTime);
   const [error, setError] = useState<string | null>(null);
