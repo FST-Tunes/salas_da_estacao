@@ -125,6 +125,10 @@ export function BookingSlotPreview({ booking, selectedRoom }: Props) {
           const selected = inSelection(start);
           const free = cell.state === "free";
           const LockedIcon = free ? null : LOCKED_ICON[cell.state as "pending" | "busy" | "off"];
+          // Booker name on the first block of an occupied run — shown to the admin
+          // too, except on the solid-navy "own room" selection (it's this booking).
+          const namedSlot =
+            !!cell.label && (cell.state === "busy" || cell.state === "pending") && !(selected && ownRoom);
 
           // Own room → solid navy selection (matches the booking wizard).
           // Other room → keep real state, hug with a navy brace ring so the
@@ -140,9 +144,9 @@ export function BookingSlotPreview({ booking, selectedRoom }: Props) {
               key={start}
               role="gridcell"
               aria-label={`${start} a ${blockEnd(start)}${
-                selected ? ", pedido" : free ? ", disponível" : cell.state === "busy" ? ", ocupado" : cell.state === "pending" ? ", pendente" : ", indisponível"
+                selected ? ", pedido" : free ? ", disponível" : cell.state === "busy" ? `, ocupado por ${cell.label}` : cell.state === "pending" ? `, pendente — ${cell.label}` : ", indisponível"
               }`}
-              className={`numeral relative flex h-12 items-center justify-center gap-1.5 rounded-md border text-xs font-medium tabular-nums ${cls}`}
+              className={`numeral relative flex h-12 items-center justify-center gap-1.5 rounded-md border px-1.5 text-xs font-medium tabular-nums ${cls}`}
             >
               {selected && !ownRoom && (
                 <>
@@ -150,12 +154,26 @@ export function BookingSlotPreview({ booking, selectedRoom }: Props) {
                   <span className="absolute right-1 font-display text-base text-navy" aria-hidden>{`}`}</span>
                 </>
               )}
-              {selected && ownRoom ? (
-                <Check size={12} weight="bold" aria-hidden />
+              {namedSlot ? (
+                <span className="flex w-full min-w-0 flex-col items-center justify-center leading-tight">
+                  <span className="flex items-center gap-1">
+                    {LockedIcon && <LockedIcon size={11} weight="bold" aria-hidden />}
+                    {`${start} – ${blockEnd(start)}`}
+                  </span>
+                  <span className="block w-full truncate text-center text-[0.6rem] font-medium opacity-90">
+                    {cell.label}
+                  </span>
+                </span>
               ) : (
-                LockedIcon && <LockedIcon size={12} weight="bold" aria-hidden />
+                <>
+                  {selected && ownRoom ? (
+                    <Check size={12} weight="bold" aria-hidden />
+                  ) : (
+                    LockedIcon && <LockedIcon size={12} weight="bold" aria-hidden />
+                  )}
+                  {`${start} – ${blockEnd(start)}`}
+                </>
               )}
-              {`${start} – ${blockEnd(start)}`}
             </div>
           );
         })}

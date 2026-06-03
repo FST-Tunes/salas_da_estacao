@@ -81,6 +81,8 @@ export function TimeStep({
           const free = cell.state === "free";
           const selected = !!selection && idx >= selection.lo && idx <= selection.hi;
           const LockedIcon = free ? null : LOCKED_ICON[cell.state as "pending" | "busy" | "off"];
+          // Booker name on the first block of an occupied run (public-safe: no phone).
+          const namedSlot = !selected && !!cell.label && (cell.state === "busy" || cell.state === "pending");
 
           return (
             <button
@@ -90,20 +92,34 @@ export function TimeStep({
               data-state={cell.state}
               disabled={!free}
               aria-pressed={selected}
-              aria-label={`${start} a ${blockEnd(start)}${free ? (selected ? ", selecionado" : ", disponível") : cell.state === "busy" ? ", ocupado" : cell.state === "pending" ? ", pendente" : ", indisponível"}`}
+              aria-label={`${start} a ${blockEnd(start)}${free ? (selected ? ", selecionado" : ", disponível") : cell.state === "busy" ? `, ocupado por ${cell.label}` : cell.state === "pending" ? `, pendente — ${cell.label}` : ", indisponível"}`}
               onClick={() => free && handleClick(idx)}
-              className={`numeral flex h-12 items-center justify-center gap-1.5 rounded-md border text-xs font-medium tabular-nums transition-colors ${
+              className={`numeral flex h-12 items-center justify-center gap-1.5 rounded-md border px-1.5 text-xs font-medium tabular-nums transition-colors ${
                 selected
                   ? "border-navy bg-navy text-text-on-dark"
                   : `border-transparent ${STATE_CLS[cell.state]}${free ? " hover:brightness-[0.97]" : ""}`
               } ${free ? "cursor-pointer" : "cursor-default"}`}
             >
-              {selected ? (
-                <Check size={12} weight="bold" aria-hidden />
+              {namedSlot ? (
+                <span className="flex w-full min-w-0 flex-col items-center justify-center leading-tight">
+                  <span className="flex items-center gap-1">
+                    {LockedIcon && <LockedIcon size={11} weight="bold" aria-hidden />}
+                    {`${start} – ${blockEnd(start)}`}
+                  </span>
+                  <span className="block w-full truncate text-center text-[0.6rem] font-medium opacity-90">
+                    {cell.label}
+                  </span>
+                </span>
               ) : (
-                LockedIcon && <LockedIcon size={12} weight="bold" aria-hidden />
+                <>
+                  {selected ? (
+                    <Check size={12} weight="bold" aria-hidden />
+                  ) : (
+                    LockedIcon && <LockedIcon size={12} weight="bold" aria-hidden />
+                  )}
+                  {`${start} – ${blockEnd(start)}`}
+                </>
               )}
-              {`${start} – ${blockEnd(start)}`}
             </button>
           );
         })}
