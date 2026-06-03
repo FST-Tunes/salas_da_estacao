@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -10,7 +11,8 @@ export async function signInAction(
   formData: FormData,
 ): Promise<{ error?: string }> {
   if (!isSupabaseConfigured) {
-    // Offline demo: no auth backend; the /admin area is open.
+    const jar = await cookies();
+    jar.set("demo-auth", "1", { httpOnly: true, path: "/", sameSite: "lax" });
     redirect("/admin");
   }
 
@@ -29,6 +31,9 @@ export async function signOutAction() {
   if (isSupabaseConfigured) {
     const sb = await createSupabaseServerClient();
     await sb.auth.signOut();
+  } else {
+    const jar = await cookies();
+    jar.delete("demo-auth");
   }
   redirect("/admin/login");
 }

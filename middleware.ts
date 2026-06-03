@@ -13,8 +13,16 @@ export async function middleware(request: NextRequest) {
 
   let response = NextResponse.next({ request });
 
-  // Offline demo: skip auth entirely so the public site works without a DB.
-  if (!url || !anon) return response;
+  // Offline demo: protect /admin behind a lightweight demo-auth cookie.
+  if (!url || !anon) {
+    const path = request.nextUrl.pathname;
+    const isAdminArea = path.startsWith("/admin") && path !== "/admin/login";
+    const hasDemo = request.cookies.get("demo-auth")?.value === "1";
+    if (isAdminArea && !hasDemo) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+    return response;
+  }
 
   const supabase = createServerClient(url, anon, {
     cookies: {
