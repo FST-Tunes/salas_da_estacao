@@ -1,10 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { Warning, ArrowRight } from "@phosphor-icons/react";
 import { signInAction } from "@/app/actions/auth";
+import { Header } from "@/components/brand/Header";
+import { Footer } from "@/components/brand/Footer";
 import { Button, LinkButton } from "@/components/ui/Button";
 
 const configured =
@@ -15,15 +15,14 @@ export default function LoginPage() {
   const [state, formAction, pending] = useActionState(signInAction, {});
 
   return (
-    <main className="flex min-h-[100dvh] items-center justify-center bg-surface-2 px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex flex-col items-center text-center">
-          <Image src="/brand/emm-symbol.png" alt="" aria-hidden width={44} height={56} className="h-14 w-auto" />
-          <h1 className="mt-4 font-display text-2xl text-navy">Área reservada</h1>
-          <p className="mt-1 text-sm text-text-muted">Gestão de reservas · EMM</p>
-        </div>
+    <div className="flex min-h-[100dvh] flex-col">
+      <Header />
 
-        <div className="rounded-lg border border-hairline bg-surface-0 p-6 shadow-md">
+      <main className="mx-auto flex w-full max-w-[1200px] flex-1 items-start px-4 py-12 sm:px-6">
+        <div className="w-full max-w-sm">
+          <h1 className="font-display text-2xl text-navy">Área reservada</h1>
+          <p className="mt-1 mb-6 text-sm text-text-muted">Gestão de reservas · EMM</p>
+
           {configured ? (
             <form action={formAction} className="space-y-4">
               <div className="flex flex-col gap-1.5">
@@ -61,23 +60,17 @@ export default function LoginPage() {
               </Button>
             </form>
           ) : (
-            <div className="space-y-4 text-center">
-              <p className="rounded-md bg-pending-fill px-3 py-2 text-sm text-pending-ink">
-                Modo de demonstração — sem base de dados configurada. A área de gestão está aberta
-                para pré-visualização.
-              </p>
-              <LinkButton href="/admin" className="w-full">
-                Entrar em demonstração
+            <form action={formAction} className="space-y-4">
+              <Button type="submit" className="w-full">
+                Entrar
                 <ArrowRight size={16} weight="bold" />
-              </LinkButton>
-            </div>
+              </Button>
+            </form>
           )}
         </div>
+      </main>
 
-        <p className="mt-5 text-center text-sm">
-          <Link href="/" className="text-text-muted hover:text-navy">← Voltar à disponibilidade</Link>
-        </p>
-      </div>
-    </main>
+      <Footer />
+    </div>
   );
 }
