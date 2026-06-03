@@ -20,6 +20,7 @@ export function RecurringForm({ rooms, blocks, ends }: Props) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [created, setCreated] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [roomId, setRoomId] = useState(rooms[0]?.id ?? "");
   const [name, setName] = useState("");
@@ -29,9 +30,30 @@ export function RecurringForm({ rooms, blocks, ends }: Props) {
   const [from, setFrom] = useState("");
   const [until, setUntil] = useState("");
 
+  /** Keep `end` after `start`: changing the start must re-clamp a now-stale end
+   *  so its (filtered-out) old value can't linger in state and block submit. */
+  function changeStart(next: string) {
+    setStart(next);
+    if (toMinutes(end) <= toMinutes(next)) {
+      setEnd(ends.find((t) => toMinutes(t) > toMinutes(next)) ?? end);
+    }
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!from || !until || !name.trim() || !roomId) return;
+    setError(null);
+    if (!name.trim() || !roomId) {
+      setError("Indique a sala e o nome ou grupo.");
+      return;
+    }
+    if (!from || !until) {
+      setError("Indique o intervalo de datas (de / até).");
+      return;
+    }
+    if (toMinutes(end) <= toMinutes(start)) {
+      setError("A hora de fim tem de ser depois da de início.");
+      return;
+    }
     const dates: string[] = [];
     let cursor = from;
     let guard = 0;
@@ -82,7 +104,7 @@ export function RecurringForm({ rooms, blocks, ends }: Props) {
         </Labeled>
         <div className="grid grid-cols-2 gap-3">
           <Labeled label="Início">
-            <select value={start} onChange={(e) => setStart(e.target.value)} className={`${selectCls} numeral`}>
+            <select value={start} onChange={(e) => changeStart(e.target.value)} className={`${selectCls} numeral`}>
               {blocks.map((b) => <option key={b} value={b}>{b}</option>)}
             </select>
           </Labeled>
@@ -99,6 +121,8 @@ export function RecurringForm({ rooms, blocks, ends }: Props) {
           <input type="date" value={until} onChange={(e) => setUntil(e.target.value)} required className={`${inputCls} numeral`} />
         </Labeled>
       </div>
+
+      {error !== null && <p className="text-sm text-red">{error}</p>}
 
       {created !== null && (
         <p className="flex items-center gap-2 text-sm text-free-ink">

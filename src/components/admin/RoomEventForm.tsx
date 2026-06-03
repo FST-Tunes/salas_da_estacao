@@ -31,15 +31,34 @@ export function RoomEventForm({ roomId, roomName, blocks, ends }: Props) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<{ created: number; weeks: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [weekday, setWeekday] = useState(2); // Tuesday by default
   const [start, setStart] = useState(blocks[0] ?? "20:00");
   const [end, setEnd] = useState(ends.find((t) => toMinutes(t) > toMinutes(blocks[0] ?? "20:00")) ?? "22:00");
 
+  /** Keep `end` after `start`: changing the start time must re-clamp a now-stale
+   *  end, otherwise the (filtered-out) old value lingers in state and submit
+   *  silently rejects it. */
+  function changeStart(next: string) {
+    setStart(next);
+    if (toMinutes(end) <= toMinutes(next)) {
+      setEnd(ends.find((t) => toMinutes(t) > toMinutes(next)) ?? end);
+    }
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || toMinutes(end) <= toMinutes(start)) return;
+    setError(null);
+    if (!name.trim()) {
+      setError("Indique o nome ou grupo.");
+      return;
+    }
+    if (toMinutes(end) <= toMinutes(start)) {
+      setError("A hora de fim tem de ser depois da de início.");
+      return;
+    }
 
     const from = todayISO();
     const until = addDays(from, HORIZON_WEEKS * 7);
@@ -103,7 +122,7 @@ export function RoomEventForm({ roomId, roomName, blocks, ends }: Props) {
         </Labeled>
         <div className="grid grid-cols-2 gap-3">
           <Labeled label="Início">
-            <select value={start} onChange={(e) => setStart(e.target.value)} className={`${inputCls} numeral`}>
+            <select value={start} onChange={(e) => changeStart(e.target.value)} className={`${inputCls} numeral`}>
               {blocks.map((b) => <option key={b} value={b}>{b}</option>)}
             </select>
           </Labeled>
@@ -114,6 +133,8 @@ export function RoomEventForm({ roomId, roomName, blocks, ends }: Props) {
           </Labeled>
         </div>
       </div>
+
+      {error !== null && <p className="text-sm text-red">{error}</p>}
 
       {result !== null && (
         <p className="flex items-center gap-2 text-sm text-free-ink">
