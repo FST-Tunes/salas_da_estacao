@@ -11,10 +11,7 @@ export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Inject pathname so server layouts can read it via headers().
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-current-path", request.nextUrl.pathname);
-  let response = NextResponse.next({ request: { headers: requestHeaders } });
+  let response = NextResponse.next();
 
   // Offline demo: protect /admin behind a lightweight demo-auth cookie.
   if (!url || !anon) {
