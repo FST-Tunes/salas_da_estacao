@@ -27,7 +27,7 @@ O administrador deverá conseguir:
 * Remover salas.
 * Alterar nomes das salas.
 
----
+----
 
 # Utilizadores
 
