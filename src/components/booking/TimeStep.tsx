@@ -4,7 +4,7 @@ import { Check } from "@phosphor-icons/react";
 import type { SlotState } from "@/lib/types";
 import type { SlotCell } from "@/app/actions/availability";
 import { blockEnd } from "@/lib/time/blocks";
-import type { SlotRun } from "@/lib/time/selection";
+import { nextRun, type SlotRun } from "@/lib/time/selection";
 import { STATE_CLS, LOCKED_ICON } from "@/components/schedule/slotVisuals";
 
 /**
@@ -36,37 +36,9 @@ export function TimeStep({
   roomLabel: string;
 }) {
   const handleClick = (i: number) => {
-    if (!selection) {
-      onSelectionChange({ lo: i, hi: i });
-      return;
-    }
-    const { lo, hi } = selection;
-
-    if (i >= lo && i <= hi) {
-      if (lo === hi) {
-        // Single block: toggle off.
-        onSelectionChange(null);
-      } else if (i === lo) {
-        onSelectionChange({ lo: lo + 1, hi });
-      } else if (i === hi) {
-        onSelectionChange({ lo, hi: hi - 1 });
-      } else {
-        // Interior block: keep it and trim the smaller side.
-        // Whichever end is closer becomes the new boundary at i.
-        const distToLo = i - lo;
-        const distToHi = hi - i;
-        onSelectionChange(distToHi <= distToLo ? { lo, hi: i } : { lo: i, hi });
-      }
-      return;
-    }
-
-    // An unselected block: extend the run towards it, but only if every block
-    // in the gap is free (can't jump over busy/pending/off blocks).
-    const [gapStart, gapEnd] = i < lo ? [i, lo - 1] : [hi + 1, i];
-    const gapAllFree = cells.slice(gapStart, gapEnd + 1).every((c) => c.state === "free");
-    if (!gapAllFree) return;
-
-    onSelectionChange(i < lo ? { lo: i, hi } : { lo, hi: i });
+    const next = nextRun(i, selection, cells);
+    // Same reference ⇒ no-op (e.g. the gap wasn't all free); skip the update.
+    if (next !== selection) onSelectionChange(next);
   };
 
   return (

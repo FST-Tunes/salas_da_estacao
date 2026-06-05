@@ -1,17 +1,15 @@
 import { SectionTitle } from "@/components/brand/SectionTitle";
 import { BookingCard } from "@/components/admin/BookingCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { getDashboardData, getSettings, effectiveState } from "@/lib/data/repository";
-import { blockStarts } from "@/lib/time/blocks";
+import { getDashboardData, effectiveState } from "@/lib/data/repository";
 import { todayISO, formatLongDate } from "@/lib/time/dates";
 
 export const metadata = { title: "Painel" };
 
 export default async function AdminDashboard() {
   const today = todayISO();
-  const [settings, data] = await Promise.all([getSettings(), getDashboardData(today)]);
+  const data = await getDashboardData(today);
   const { rooms, bookingsToday, pending } = data;
-  const blocks = blockStarts(settings.openTime, settings.closeTime);
   const now = new Date();
 
   const roomName = (id: string | null) =>
@@ -48,7 +46,6 @@ export default async function AdminDashboard() {
                 effective={effectiveState(b, now)}
                 roomName={roomName(b.roomId)}
                 activeRooms={activeRooms}
-                blocks={blocks}
                 expandable
               />
             ))}
@@ -69,7 +66,6 @@ export default async function AdminDashboard() {
                 effective={effectiveState(b, now)}
                 roomName={roomName(b.roomId)}
                 activeRooms={activeRooms}
-                blocks={blocks}
               />
             ))}
           </ul>

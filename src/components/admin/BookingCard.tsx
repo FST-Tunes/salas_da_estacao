@@ -14,7 +14,6 @@ interface Props {
   effective: BookingState;
   roomName: string | null;
   activeRooms: { id: string; name: string }[];
-  blocks: string[];
   showActions?: boolean;
   /** When true, clicking the card header reveals the day's slot view for the
    *  booking's room (and lets the admin switch rooms). Used on the dashboard. */
@@ -31,7 +30,6 @@ export function BookingCard({
   effective,
   roomName,
   activeRooms,
-  blocks,
   showActions = true,
   expandable = false,
 }: Props) {
@@ -129,7 +127,6 @@ export function BookingCard({
           booking={booking}
           effective={effective}
           rooms={activeRooms}
-          blocks={blocks}
           assignRoom={selectedRoom}
           onAssignRoomChange={setSelectedRoom}
         />

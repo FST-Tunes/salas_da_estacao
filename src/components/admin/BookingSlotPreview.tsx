@@ -5,6 +5,7 @@ import { CircleNotch, Warning, Check, X } from "@phosphor-icons/react";
 import type { Booking, SlotState } from "@/lib/types";
 import { getDayAvailability, type DayAvailability, type SlotCell } from "@/app/actions/availability";
 import { blockEnd, toMinutes } from "@/lib/time/blocks";
+import { nextRun, type SlotRun } from "@/lib/time/selection";
 import { STATE_CLS, LOCKED_ICON } from "@/components/schedule/slotVisuals";
 import { Legend } from "@/components/schedule/Legend";
 
@@ -20,19 +21,34 @@ interface Props {
   editing?: boolean;
   /** Drop this booking from the availability calc (its own slots read as free). */
   excludeBookingId?: string;
+  /**
+   * Interactive edit mode: the requested range (`booking.startTime/endTime`)
+   * becomes a click-to-pick selection — exactly like the public schedule. The
+   * chosen blocks fill solid navy; clicking calls `onRangeChange`. The booking's
+   * *original* range (`originalStart/originalEnd`) is drawn with the navy outline
+   * + braces, so the admin always sees where it sat before.
+   */
+  editable?: boolean;
+  onRangeChange?: (startTime: string, endTime: string) => void;
+  originalStart?: string;
+  originalEnd?: string;
 }
 
 /**
- * Read-only slot view for a single booking's day, shown when an admin expands a
- * request card. The requested time range is marked as the "user selection":
- *  - in the booking's own room, filled navy (the wizard's selection visual);
- *  - in any other room, the room's real free/busy state shows through, hugged by
- *    the brace motif so the admin can judge whether the request fits there.
- * The room is chosen via the assignment dropdown in the actions row, so for
- * "qualquer sala" requests (roomId === null) picking a room there immediately
- * shows that room's availability for the same day.
+ * Slot view for a single booking's day, shown when an admin expands or edits a
+ * request. Read-only by default; with `editable`, the requested time range is a
+ * click-to-pick selection (shared gesture with the public TimeStep).
  */
-export function BookingSlotPreview({ booking, selectedRoom, editing = false, excludeBookingId }: Props) {
+export function BookingSlotPreview({
+  booking,
+  selectedRoom,
+  editing = false,
+  excludeBookingId,
+  editable = false,
+  onRangeChange,
+  originalStart,
+  originalEnd,
+}: Props) {
   const [avail, setAvail] = useState<DayAvailability | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,11 +114,34 @@ export function BookingSlotPreview({ booking, selectedRoom, editing = false, exc
     return m >= selStart && m < selEnd;
   };
 
+  // Original requested range (edit mode): drawn with the navy outline + braces.
+  const origStart = originalStart != null ? toMinutes(originalStart) : null;
+  const origEnd = originalEnd != null ? toMinutes(originalEnd) : null;
+  const inOriginal = (start: string) => {
+    if (origStart == null || origEnd == null) return false;
+    const m = toMinutes(start);
+    return m >= origStart && m < origEnd;
+  };
+
   // Fit check (only meaningful for a room that isn't the one already holding the
   // booking): are all the requested blocks free in this room?
   const selectionFree = blocks.every(
     (start, idx) => !inSelection(start) || cells[idx]?.state === "free",
   );
+
+  // Click-to-pick: convert the current selection to block indices, run the
+  // shared gesture, and report the new range back as start/end times.
+  const run: SlotRun | null = (() => {
+    const lo = blocks.indexOf(booking.startTime);
+    const hi = blocks.findIndex((b) => blockEnd(b) === booking.endTime);
+    return lo >= 0 && hi >= 0 ? { lo, hi } : null;
+  })();
+  const handleClick = (i: number) => {
+    if (!editable || !onRangeChange) return;
+    const next = nextRun(i, run, cells);
+    if (!next || next === run) return; // null = would empty the booking → ignore
+    onRangeChange(blocks[next.lo], blockEnd(blocks[next.hi]));
+  };
 
   return (
     <div className="space-y-3">
@@ -123,6 +162,13 @@ export function BookingSlotPreview({ booking, selectedRoom, editing = false, exc
           ))}
       </div>
 
+      {editable && (
+        <p className="text-xs text-text-muted">
+          Clique nos blocos para escolher o novo horário. A azul-escuro fica a nova seleção; as
+          chavetas marcam o horário pedido originalmente.
+        </p>
+      )}
+
       <div
         role="grid"
         aria-label={`Horários de ${room?.name ?? "sala"} em ${booking.date}`}
@@ -133,36 +179,49 @@ export function BookingSlotPreview({ booking, selectedRoom, editing = false, exc
           const selected = inSelection(start);
           const free = cell.state === "free";
           const LockedIcon = free ? null : LOCKED_ICON[cell.state as "pending" | "busy" | "off" | "blocked"];
-          // Solid-navy fill is the wizard's "own room" selection. In edit mode we
-          // drop it so the real free/busy stays visible while the admin retimes.
-          const solidNavy = selected && ownRoom && !editing;
-          const braced = selected && !solidNavy;
-          // Booker name on the first block of an occupied run — shown to the admin
-          // too, except where the solid-navy selection covers it (it's this booking).
+
+          // ── Visual state ────────────────────────────────────────────────
+          // Read-only own-room view fills the booking's slots solid navy.
+          // Edit mode fills the *new* selection solid navy (only where free, so
+          // conflicts in another room stay visible) and braces the original.
+          const original = editable && inOriginal(start);
+          // Edit mode fills only *free* selected blocks (so a conflict in another
+          // room stays visible); the read-only own-room view fills regardless.
+          const solidNavy = selected && (editable ? free : ownRoom && !editing);
+          // Brace the slots that should read as the "selection" but aren't solid:
+          // the original range in edit mode, or the requested range in view mode.
+          const braced = editable ? original : selected && !solidNavy;
+
           const namedSlot =
             !!cell.label && (cell.state === "busy" || cell.state === "pending") && !solidNavy;
+          const braceTone = solidNavy ? "text-text-on-dark/80" : "text-navy";
 
-          // Solid navy = own-room selection (approve flow). Otherwise keep the real
-          // state and hug it with a navy brace ring so free/busy stays readable.
           const cls = solidNavy
             ? "border-navy bg-navy text-text-on-dark"
             : braced
               ? `border-navy ${STATE_CLS[cell.state]} ring-1 ring-navy`
-              : `border-transparent ${STATE_CLS[cell.state]}`;
+              : selected && !free
+                ? `border-busy-ink ${STATE_CLS[cell.state]} ring-1 ring-busy-ink`
+                : `border-transparent ${STATE_CLS[cell.state]}`;
+
+          const interactive = editable && free;
+          const Tag = interactive ? "button" : "div";
 
           return (
-            <div
+            <Tag
               key={start}
-              role="gridcell"
+              {...(interactive
+                ? { type: "button" as const, onClick: () => handleClick(idx) }
+                : { role: "gridcell" as const })}
               aria-label={`${start} a ${blockEnd(start)}${
                 selected ? (editing ? ", selecionado" : ", pedido") : free ? ", disponível" : cell.state === "busy" ? `, ocupado por ${cell.label}` : cell.state === "pending" ? `, pendente, ${cell.label}` : ", indisponível"
               }`}
-              className={`numeral relative flex h-12 items-center justify-center gap-1.5 rounded-md border px-1.5 text-xs font-medium tabular-nums ${cls}`}
+              className={`numeral relative flex h-12 items-center justify-center gap-1.5 rounded-md border px-1.5 text-xs font-medium tabular-nums ${cls} ${interactive ? "cursor-pointer transition-colors hover:brightness-[0.97]" : ""}`}
             >
-              {braced && (
+              {(braced || (solidNavy && original)) && (
                 <>
-                  <span className="absolute left-1 font-display text-base text-navy" aria-hidden>{`{`}</span>
-                  <span className="absolute right-1 font-display text-base text-navy" aria-hidden>{`}`}</span>
+                  <span className={`absolute left-1 font-display text-base ${braceTone}`} aria-hidden>{`{`}</span>
+                  <span className={`absolute right-1 font-display text-base ${braceTone}`} aria-hidden>{`}`}</span>
                 </>
               )}
               {namedSlot ? (
@@ -177,15 +236,15 @@ export function BookingSlotPreview({ booking, selectedRoom, editing = false, exc
                 </span>
               ) : (
                 <>
-                  {solidNavy ? (
+                  {solidNavy && !original ? (
                     <Check size={12} weight="bold" aria-hidden />
                   ) : (
-                    LockedIcon && <LockedIcon size={12} weight="bold" aria-hidden />
+                    !braced && LockedIcon && <LockedIcon size={12} weight="bold" aria-hidden />
                   )}
                   {`${start} – ${blockEnd(start)}`}
                 </>
               )}
-            </div>
+            </Tag>
           );
         })}
       </div>

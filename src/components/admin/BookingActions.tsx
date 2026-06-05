@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Overlay } from "@/components/ui/Overlay";
 import { Field, Select } from "@/components/ui/Field";
 import { BookingSlotPreview } from "./BookingSlotPreview";
-import { blockEnd, toMinutes, formatRange } from "@/lib/time/blocks";
+import { formatRange } from "@/lib/time/blocks";
 import {
   approveAction,
   rejectAction,
@@ -21,7 +21,6 @@ interface Props {
   booking: Booking;
   effective: BookingState;
   rooms: { id: string; name: string }[];
-  blocks: string[];
   /** Optionally lift the selected room so a sibling (the slot preview) can react
    *  to it. When omitted, the component keeps its own room state. */
   assignRoom?: string;
@@ -32,7 +31,6 @@ export function BookingActions({
   booking,
   effective,
   rooms,
-  blocks,
   assignRoom: controlledRoom,
   onAssignRoomChange,
 }: Props) {
@@ -47,7 +45,6 @@ export function BookingActions({
   const [end, setEnd] = useState(booking.endTime);
   const [error, setError] = useState<string | null>(null);
 
-  const ends = blocks.map(blockEnd);
   const needsAssignment = !booking.roomId; // "qualquer sala" pending
   const isBlock = booking.isBlock; // admin block, not a real booking
 
@@ -136,50 +133,31 @@ export function BookingActions({
         size="lg"
       >
         <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Sala">
-              <Select
-                value={assignRoom}
-                onChange={setAssignRoom}
-                aria-label="Sala"
-                options={rooms.map((r) => ({ value: r.id, label: r.name }))}
-              />
-            </Field>
-            <Field label="Início">
-              <Select
-                value={start}
-                onChange={(next) => {
-                  setStart(next);
-                  // Keep the end after the start so the preview selection stays valid.
-                  if (toMinutes(end) <= toMinutes(next)) {
-                    const nextEnd = ends.find((t) => toMinutes(t) > toMinutes(next));
-                    if (nextEnd) setEnd(nextEnd);
-                  }
-                }}
-                numeral
-                aria-label="Hora de início"
-                options={blocks.map((b) => ({ value: b, label: b }))}
-              />
-            </Field>
-            <Field label="Fim">
-              <Select
-                value={end}
-                onChange={setEnd}
-                numeral
-                aria-label="Hora de fim"
-                options={ends.filter((t) => toMinutes(t) > toMinutes(start)).map((t) => ({ value: t, label: t }))}
-              />
-            </Field>
-          </div>
+          <Field label="Sala" className="sm:max-w-xs">
+            <Select
+              value={assignRoom}
+              onChange={setAssignRoom}
+              aria-label="Sala"
+              options={rooms.map((r) => ({ value: r.id, label: r.name }))}
+            />
+          </Field>
 
-          {/* Live availability for the picked room + day, hugging the new range.
-              Excludes this booking so its own current slot reads as free. */}
+          {/* Click-to-pick the new time, exactly like the public schedule. The new
+              selection fills solid navy; the original requested range keeps the
+              navy outline + braces. Excludes this booking so its own slots are free. */}
           <div className="rounded-lg border border-hairline bg-surface-1/40 p-3">
             <BookingSlotPreview
               booking={{ date: booking.date, startTime: start, endTime: end, roomId: booking.roomId }}
               selectedRoom={assignRoom}
               excludeBookingId={booking.id}
               editing
+              editable
+              onRangeChange={(s, e) => {
+                setStart(s);
+                setEnd(e);
+              }}
+              originalStart={booking.startTime}
+              originalEnd={booking.endTime}
             />
           </div>
 

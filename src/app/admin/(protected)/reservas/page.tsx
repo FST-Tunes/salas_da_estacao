@@ -95,7 +95,6 @@ export default async function ReservasPage({
               effective={eff}
               roomName={roomName(b.roomId)}
               activeRooms={activeRooms}
-              blocks={blocks}
             />
           ))}
         </ul>
