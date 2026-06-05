@@ -22,7 +22,7 @@ export function bookingApprovedMessage(b: Booking, roomName: string): string {
     `Olá ${b.bookerName}, a sua reserva foi APROVADA.`,
     `Sala: ${roomName}`,
     `Quando: ${slot(b)}`,
-    `— Salas da Estação · ${VENUE}`,
+    `Salas da Estação · ${VENUE}`,
   ].join("\n");
 }
 
@@ -32,7 +32,7 @@ export function bookingRejectedMessage(b: Booking, roomName: string | null): str
     roomName ? `Sala: ${roomName}` : null,
     `Quando: ${slot(b)}`,
     `Pode submeter um novo pedido noutro horário.`,
-    `— Salas da Estação · ${VENUE}`,
+    `Salas da Estação · ${VENUE}`,
   ]
     .filter(Boolean)
     .join("\n");

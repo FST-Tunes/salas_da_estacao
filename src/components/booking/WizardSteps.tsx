@@ -65,7 +65,7 @@ export function WizardSteps({
                   {s.label}
                 </span>
                 <span className="block truncate text-[0.82rem] font-medium leading-tight">
-                  {s.value ?? "—"}
+                  {s.value ?? "–"}
                 </span>
               </span>
             </button>

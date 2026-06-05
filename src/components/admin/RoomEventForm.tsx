@@ -141,7 +141,7 @@ export function RoomEventForm({ roomId, roomName, blocks, ends }: Props) {
             <p className="flex items-center gap-2 text-sm text-free-ink">
               <CheckCircle size={16} weight="fill" aria-hidden />
               {result.created} de {result.weeks} semana(s) criada(s)
-              {result.created < result.weeks && " — as restantes já tinham o horário ocupado."}
+              {result.created < result.weeks && ". As restantes já tinham o horário ocupado."}
             </p>
           )}
 

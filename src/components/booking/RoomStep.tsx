@@ -139,7 +139,7 @@ export function RoomStep({
             <span className="block text-sm text-text-muted">
               {anyFreeBlocks === 0
                 ? "Sem disponibilidade neste dia"
-                : "Escolhemos a sala por si — atribuída pelo administrador ao aprovar"}
+                : "Escolhemos a sala por si, atribuída pelo administrador ao aprovar"}
             </span>
           </span>
           <ArrowRight

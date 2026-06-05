@@ -159,7 +159,7 @@ export function BlockForm({ rooms, blocks, ends, defaultDate, fixedRoom }: Props
               <CheckCircle size={16} weight="fill" aria-hidden className="mt-0.5 shrink-0" />
               <span>
                 {result.created} bloqueio(s) criado(s)
-                {result.skipped > 0 && ` — ${result.skipped} sala(s) ignorada(s) por já terem reservas neste horário.`}
+                {result.skipped > 0 && `. ${result.skipped} sala(s) ignorada(s) por já terem reservas neste horário.`}
               </span>
             </p>
           )}

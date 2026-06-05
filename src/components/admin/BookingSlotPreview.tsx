@@ -155,7 +155,7 @@ export function BookingSlotPreview({ booking, selectedRoom, editing = false, exc
               key={start}
               role="gridcell"
               aria-label={`${start} a ${blockEnd(start)}${
-                selected ? (editing ? ", selecionado" : ", pedido") : free ? ", disponível" : cell.state === "busy" ? `, ocupado por ${cell.label}` : cell.state === "pending" ? `, pendente — ${cell.label}` : ", indisponível"
+                selected ? (editing ? ", selecionado" : ", pedido") : free ? ", disponível" : cell.state === "busy" ? `, ocupado por ${cell.label}` : cell.state === "pending" ? `, pendente, ${cell.label}` : ", indisponível"
               }`}
               className={`numeral relative flex h-12 items-center justify-center gap-1.5 rounded-md border px-1.5 text-xs font-medium tabular-nums ${cls}`}
             >

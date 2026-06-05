@@ -10,7 +10,7 @@ export default async function SalasPage() {
       <div>
         <h1 className="font-display text-2xl text-navy">Salas</h1>
         <p className="mt-1 text-sm text-text-muted">
-          Adicione, renomeie ou remova salas. Remover preserva o histórico — a sala deixa de
+          Adicione, renomeie ou remova salas. Remover preserva o histórico: a sala deixa de
           aceitar novas reservas mas as reservas passadas mantêm-se.
         </p>
       </div>

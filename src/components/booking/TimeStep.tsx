@@ -92,7 +92,7 @@ export function TimeStep({
               data-state={cell.state}
               disabled={!free}
               aria-pressed={selected}
-              aria-label={`${start} a ${blockEnd(start)}${free ? (selected ? ", selecionado" : ", disponível") : cell.state === "busy" ? `, ocupado por ${cell.label}` : cell.state === "pending" ? `, pendente — ${cell.label}` : ", indisponível"}`}
+              aria-label={`${start} a ${blockEnd(start)}${free ? (selected ? ", selecionado" : ", disponível") : cell.state === "busy" ? `, ocupado por ${cell.label}` : cell.state === "pending" ? `, pendente, ${cell.label}` : ", indisponível"}`}
               onClick={() => free && handleClick(idx)}
               className={`numeral flex h-12 items-center justify-center gap-1.5 rounded-md border px-1.5 text-xs font-medium tabular-nums transition-colors ${
                 selected

@@ -86,7 +86,7 @@ export default async function RoomSchedulePage({
         </div>
       ) : (
         <p className="text-sm text-text-muted">
-          Esta sala foi removida — restaure-a na lista de salas para adicionar acontecimentos.
+          Esta sala foi removida. Restaure-a na lista de salas para adicionar acontecimentos.
         </p>
       )}
 
