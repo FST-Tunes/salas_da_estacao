@@ -2,7 +2,7 @@
 
 import { Buildings, Stack, Warning } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Field";
+import { Input, Select } from "@/components/ui/Field";
 
 export interface CheckoutSummary {
   roomName: string;
@@ -27,9 +27,6 @@ export const DIAL_CODES = [
   { code: "+55", label: "🇧🇷 +55" },
   { code: "+1", label: "🇺🇸 +1" },
 ] as const;
-
-const dialSelectCls =
-  "shrink-0 rounded-md border border-navy/20 bg-surface-0 px-2.5 py-2.5 text-sm text-navy outline-none transition-colors focus:border-navy";
 
 /**
  * Step 4 — checkout. Docks to the bottom on mobile and to the side on desktop
@@ -100,16 +97,16 @@ export function CheckoutPanel({
           Telemóvel <span className="text-red">*</span>
         </label>
         <div className="flex gap-2">
-          <select
-            value={dialCode}
-            onChange={(e) => onDialCodeChange(e.target.value)}
-            aria-label="Indicativo do país"
-            className={`numeral ${dialSelectCls}`}
-          >
-            {DIAL_CODES.map((d) => (
-              <option key={d.code} value={d.code}>{d.label}</option>
-            ))}
-          </select>
+          <div className="w-28 shrink-0">
+            <Select
+              value={dialCode}
+              onChange={onDialCodeChange}
+              aria-label="Indicativo do país"
+              numeral
+              className="py-2.5"
+              options={DIAL_CODES.map((d) => ({ value: d.code, label: d.label }))}
+            />
+          </div>
           <Input
             id="bk-phone"
             value={phone}

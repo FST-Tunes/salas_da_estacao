@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { CaretLeft, CaretRight, CalendarBlank } from "@phosphor-icons/react";
+import { CaretLeft, CaretRight } from "@phosphor-icons/react";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { addDays, formatLongDate } from "@/lib/time/dates";
 
 /** Day navigation for the public schedule. Drives the ?date= query param. */
@@ -51,18 +52,15 @@ export function DateNav({
         <p className="ml-1 font-display text-lg text-navy">{pretty}</p>
       </div>
 
-      <label className="inline-flex items-center gap-2 rounded-md border border-navy/20 px-3 py-2 text-sm text-navy-60">
-        <CalendarBlank size={16} weight="bold" aria-hidden />
-        <span className="sr-only">Escolher data</span>
-        <input
-          type="date"
+      <div className="w-44 shrink-0 sm:w-48">
+        <DatePicker
           value={date}
           min={minDate}
           max={maxDate}
-          onChange={(e) => e.target.value && go(e.target.value)}
-          className="bg-transparent text-navy outline-none"
+          onChange={(v) => v && go(v)}
+          aria-label="Escolher data"
         />
-      </label>
+      </div>
     </div>
   );
 }

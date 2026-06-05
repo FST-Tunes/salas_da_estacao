@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowsClockwise, CheckCircle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { Overlay } from "@/components/ui/Overlay";
-import { Field, Input, Select } from "@/components/ui/Field";
+import { Field, Input, Select, DatePicker } from "@/components/ui/Field";
 import { addDays, weekdayOf, WEEKDAY_LABELS } from "@/lib/time/dates";
 import { toMinutes } from "@/lib/time/blocks";
 import { createRecurringAction } from "@/app/actions/admin";
@@ -87,39 +87,49 @@ export function RecurringForm({ rooms, blocks, ends }: Props) {
         <form onSubmit={submit} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Sala">
-              <Select value={roomId} onChange={(e) => setRoomId(e.target.value)}>
-                {rooms.map((r) => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </Select>
+              <Select
+                value={roomId}
+                onChange={setRoomId}
+                aria-label="Sala"
+                options={rooms.map((r) => ({ value: r.id, label: r.name }))}
+              />
             </Field>
             <Field label="Nome / grupo">
               <Input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Ex.: Banda Juvenil EMM" />
             </Field>
             <Field label="Dia da semana">
-              <Select value={weekday} onChange={(e) => setWeekday(Number(e.target.value))}>
-                {WEEKDAY_LABELS.map((w, i) => (
-                  <option key={w} value={i}>{w}</option>
-                ))}
-              </Select>
+              <Select
+                value={String(weekday)}
+                onChange={(v) => setWeekday(Number(v))}
+                aria-label="Dia da semana"
+                options={WEEKDAY_LABELS.map((w, i) => ({ value: String(i), label: w }))}
+              />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Início">
-                <Select value={start} onChange={(e) => changeStart(e.target.value)} className="numeral">
-                  {blocks.map((b) => <option key={b} value={b}>{b}</option>)}
-                </Select>
+                <Select
+                  value={start}
+                  onChange={changeStart}
+                  numeral
+                  aria-label="Hora de início"
+                  options={blocks.map((b) => ({ value: b, label: b }))}
+                />
               </Field>
               <Field label="Fim">
-                <Select value={end} onChange={(e) => setEnd(e.target.value)} className="numeral">
-                  {ends.filter((t) => toMinutes(t) > toMinutes(start)).map((t) => <option key={t} value={t}>{t}</option>)}
-                </Select>
+                <Select
+                  value={end}
+                  onChange={setEnd}
+                  numeral
+                  aria-label="Hora de fim"
+                  options={ends.filter((t) => toMinutes(t) > toMinutes(start)).map((t) => ({ value: t, label: t }))}
+                />
               </Field>
             </div>
             <Field label="De">
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} required className="numeral" />
+              <DatePicker value={from} onChange={setFrom} aria-label="Data de início" />
             </Field>
             <Field label="Até">
-              <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} required className="numeral" />
+              <DatePicker value={until} onChange={setUntil} min={from || undefined} aria-label="Data de fim" />
             </Field>
           </div>
 

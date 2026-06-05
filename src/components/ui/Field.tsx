@@ -1,10 +1,15 @@
 import type { ComponentProps, ReactNode } from "react";
 
 /**
- * Shared form primitives. Centralise the input/select styling that was
- * previously copy-pasted as `inputCls` / `selectCls` across the admin forms,
- * so every control looks and focuses the same way.
+ * Shared form primitives. Centralise the input styling that was previously
+ * copy-pasted across the admin forms so every control looks and focuses the
+ * same way. Dropdowns/calendars use the custom Select / DatePicker (no native
+ * controls) — Select is re-exported here for ergonomics.
  */
+
+export { Select } from "./Select";
+export type { SelectOption } from "./Select";
+export { DatePicker } from "./DatePicker";
 
 const controlBase =
   "w-full rounded-md border border-navy/20 bg-surface-0 px-3 py-2 text-sm text-navy " +
@@ -12,14 +17,6 @@ const controlBase =
 
 export function Input({ className = "", ...rest }: ComponentProps<"input">) {
   return <input className={`${controlBase} ${className}`.trim()} {...rest} />;
-}
-
-export function Select({ className = "", children, ...rest }: ComponentProps<"select">) {
-  return (
-    <select className={`${controlBase} ${className}`.trim()} {...rest}>
-      {children}
-    </select>
-  );
 }
 
 /** Label + control stack. `label` may be omitted for a bare wrapper. */

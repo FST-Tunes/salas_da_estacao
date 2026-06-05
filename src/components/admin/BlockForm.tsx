@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Prohibit, CheckCircle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { Overlay } from "@/components/ui/Overlay";
-import { Field, Input, Select } from "@/components/ui/Field";
+import { Field, Input, Select, DatePicker } from "@/components/ui/Field";
 import { toMinutes } from "@/lib/time/blocks";
 import { createBlocksAction } from "@/app/actions/admin";
 
@@ -99,7 +99,7 @@ export function BlockForm({ rooms, blocks, ends, defaultDate, fixedRoom }: Props
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Dia">
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+              <DatePicker value={date} onChange={setDate} aria-label="Dia a bloquear" />
             </Field>
 
             {fixedRoom ? (
@@ -108,12 +108,15 @@ export function BlockForm({ rooms, blocks, ends, defaultDate, fixedRoom }: Props
               </Field>
             ) : (
               <Field label="Sala">
-                <Select value={roomId} onChange={(e) => setRoomId(e.target.value)}>
-                  <option value="">Todas as salas ativas</option>
-                  {rooms.map((r) => (
-                    <option key={r.id} value={r.id}>{r.name}</option>
-                  ))}
-                </Select>
+                <Select
+                  value={roomId}
+                  onChange={setRoomId}
+                  aria-label="Sala"
+                  options={[
+                    { value: "", label: "Todas as salas ativas" },
+                    ...rooms.map((r) => ({ value: r.id, label: r.name })),
+                  ]}
+                />
               </Field>
             )}
           </div>
@@ -131,14 +134,22 @@ export function BlockForm({ rooms, blocks, ends, defaultDate, fixedRoom }: Props
           {!fullDay && (
             <div className="grid grid-cols-2 gap-3">
               <Field label="Início">
-                <Select value={start} onChange={(e) => changeStart(e.target.value)} className="numeral">
-                  {blocks.map((b) => <option key={b} value={b}>{b}</option>)}
-                </Select>
+                <Select
+                  value={start}
+                  onChange={changeStart}
+                  numeral
+                  aria-label="Hora de início"
+                  options={blocks.map((b) => ({ value: b, label: b }))}
+                />
               </Field>
               <Field label="Fim">
-                <Select value={end} onChange={(e) => setEnd(e.target.value)} className="numeral">
-                  {ends.filter((t) => toMinutes(t) > toMinutes(start)).map((t) => <option key={t} value={t}>{t}</option>)}
-                </Select>
+                <Select
+                  value={end}
+                  onChange={setEnd}
+                  numeral
+                  aria-label="Hora de fim"
+                  options={ends.filter((t) => toMinutes(t) > toMinutes(start)).map((t) => ({ value: t, label: t }))}
+                />
               </Field>
             </div>
           )}

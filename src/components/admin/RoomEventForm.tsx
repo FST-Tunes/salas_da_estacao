@@ -115,22 +115,31 @@ export function RoomEventForm({ roomId, roomName, blocks, ends }: Props) {
               />
             </Field>
             <Field label="Dia da semana">
-              <Select value={weekday} onChange={(e) => setWeekday(Number(e.target.value))}>
-                {WEEKDAY_LABELS.map((w, i) => (
-                  <option key={w} value={i}>{w}</option>
-                ))}
-              </Select>
+              <Select
+                value={String(weekday)}
+                onChange={(v) => setWeekday(Number(v))}
+                aria-label="Dia da semana"
+                options={WEEKDAY_LABELS.map((w, i) => ({ value: String(i), label: w }))}
+              />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Início">
-                <Select value={start} onChange={(e) => changeStart(e.target.value)} className="numeral">
-                  {blocks.map((b) => <option key={b} value={b}>{b}</option>)}
-                </Select>
+                <Select
+                  value={start}
+                  onChange={changeStart}
+                  numeral
+                  aria-label="Hora de início"
+                  options={blocks.map((b) => ({ value: b, label: b }))}
+                />
               </Field>
               <Field label="Fim">
-                <Select value={end} onChange={(e) => setEnd(e.target.value)} className="numeral">
-                  {ends.filter((t) => toMinutes(t) > toMinutes(start)).map((t) => <option key={t} value={t}>{t}</option>)}
-                </Select>
+                <Select
+                  value={end}
+                  onChange={setEnd}
+                  numeral
+                  aria-label="Hora de fim"
+                  options={ends.filter((t) => toMinutes(t) > toMinutes(start)).map((t) => ({ value: t, label: t }))}
+                />
               </Field>
             </div>
           </div>

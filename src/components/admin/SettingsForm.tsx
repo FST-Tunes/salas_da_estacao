@@ -47,14 +47,25 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
         </p>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Abertura">
-            <Select value={open} onChange={(e) => setOpen(e.target.value)} className="numeral">
-              {TIME_OPTIONS.slice(0, -1).map((t) => <option key={t} value={t}>{t}</option>)}
-            </Select>
+            <Select
+              value={open}
+              onChange={setOpen}
+              numeral
+              aria-label="Hora de abertura"
+              options={TIME_OPTIONS.slice(0, -1).map((t) => ({ value: t, label: t }))}
+            />
           </Field>
           <Field label="Encerramento">
-            <Select value={close} onChange={(e) => setClose(e.target.value)} className="numeral">
-              {TIME_OPTIONS.slice(1).map((t) => <option key={t} value={t}>{t === "24:00" ? "24:00 (meia-noite)" : t}</option>)}
-            </Select>
+            <Select
+              value={close}
+              onChange={setClose}
+              numeral
+              aria-label="Hora de encerramento"
+              options={TIME_OPTIONS.slice(1).map((t) => ({
+                value: t,
+                label: t === "24:00" ? "24:00 (meia-noite)" : t,
+              }))}
+            />
           </Field>
         </div>
       </fieldset>

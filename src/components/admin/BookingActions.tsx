@@ -76,16 +76,13 @@ export function BookingActions({
         {effective === "pendente" && !isBlock && (
           <>
             {needsAssignment && (
-              <select
+              <Select
                 value={assignRoom}
-                onChange={(e) => setAssignRoom(e.target.value)}
+                onChange={setAssignRoom}
                 aria-label="Atribuir sala"
-                className="h-9 w-full rounded-md border border-navy/20 bg-surface-0 px-2.5 text-sm text-navy outline-none transition-colors focus:border-navy sm:w-auto"
-              >
-                {rooms.map((r) => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </select>
+                className="h-9 w-full py-0 sm:w-auto"
+                options={rooms.map((r) => ({ value: r.id, label: r.name }))}
+              />
             )}
             <Button
               size="sm"
@@ -141,17 +138,17 @@ export function BookingActions({
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label="Sala">
-              <Select value={assignRoom} onChange={(e) => setAssignRoom(e.target.value)}>
-                {rooms.map((r) => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </Select>
+              <Select
+                value={assignRoom}
+                onChange={setAssignRoom}
+                aria-label="Sala"
+                options={rooms.map((r) => ({ value: r.id, label: r.name }))}
+              />
             </Field>
             <Field label="Início">
               <Select
                 value={start}
-                onChange={(e) => {
-                  const next = e.target.value;
+                onChange={(next) => {
                   setStart(next);
                   // Keep the end after the start so the preview selection stays valid.
                   if (toMinutes(end) <= toMinutes(next)) {
@@ -159,25 +156,19 @@ export function BookingActions({
                     if (nextEnd) setEnd(nextEnd);
                   }
                 }}
-                className="numeral"
-              >
-                {blocks.map((b) => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </Select>
+                numeral
+                aria-label="Hora de início"
+                options={blocks.map((b) => ({ value: b, label: b }))}
+              />
             </Field>
             <Field label="Fim">
               <Select
                 value={end}
-                onChange={(e) => setEnd(e.target.value)}
-                className="numeral"
-              >
-                {ends
-                  .filter((t) => toMinutes(t) > toMinutes(start))
-                  .map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-              </Select>
+                onChange={setEnd}
+                numeral
+                aria-label="Hora de fim"
+                options={ends.filter((t) => toMinutes(t) > toMinutes(start)).map((t) => ({ value: t, label: t }))}
+              />
             </Field>
           </div>
 
