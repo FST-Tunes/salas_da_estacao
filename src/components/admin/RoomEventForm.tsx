@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowsClockwise, CheckCircle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
+import { Overlay } from "@/components/ui/Overlay";
+import { Field, Input, Select } from "@/components/ui/Field";
 import { addDays, todayISO, weekdayOf, WEEKDAY_LABELS } from "@/lib/time/dates";
 import { toMinutes } from "@/lib/time/blocks";
 import { createRecurringAction } from "@/app/actions/admin";
@@ -84,81 +86,71 @@ export function RoomEventForm({ roomId, roomName, blocks, ends }: Props) {
     });
   }
 
-  if (!open) {
-    return (
+  return (
+    <>
       <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
         <ArrowsClockwise size={15} weight="bold" /> Adicionar acontecimento semanal
       </Button>
-    );
-  }
 
-  return (
-    <form onSubmit={submit} className="space-y-4 rounded-lg border border-hairline bg-surface-0 p-5">
-      <div className="flex items-center gap-2">
-        <ArrowsClockwise size={18} weight="bold" className="text-gold" aria-hidden />
-        <h3 className="font-display text-lg text-navy">Acontecimento semanal · {roomName}</h3>
-      </div>
-      <p className="text-xs text-text-muted">
-        Ocupa o mesmo dia e horário todas as semanas. São criadas reservas aprovadas para as
-        próximas {HORIZON_WEEKS} semanas.
-      </p>
+      <Overlay
+        open={open}
+        onClose={() => { setOpen(false); setResult(null); }}
+        title={`Acontecimento semanal · ${roomName}`}
+        icon={<ArrowsClockwise size={18} weight="bold" className="text-gold" aria-hidden />}
+        size="md"
+      >
+        <form onSubmit={submit} className="space-y-4">
+          <p className="text-xs text-text-muted">
+            Ocupa o mesmo dia e horário todas as semanas. São criadas reservas aprovadas para as
+            próximas {HORIZON_WEEKS} semanas.
+          </p>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Labeled label="Nome / grupo">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            placeholder="Ex.: Ensaio Banda Juvenil"
-            className={inputCls}
-          />
-        </Labeled>
-        <Labeled label="Dia da semana">
-          <select value={weekday} onChange={(e) => setWeekday(Number(e.target.value))} className={inputCls}>
-            {WEEKDAY_LABELS.map((w, i) => (
-              <option key={w} value={i}>{w}</option>
-            ))}
-          </select>
-        </Labeled>
-        <div className="grid grid-cols-2 gap-3">
-          <Labeled label="Início">
-            <select value={start} onChange={(e) => changeStart(e.target.value)} className={`${inputCls} numeral`}>
-              {blocks.map((b) => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </Labeled>
-          <Labeled label="Fim">
-            <select value={end} onChange={(e) => setEnd(e.target.value)} className={`${inputCls} numeral`}>
-              {ends.filter((t) => toMinutes(t) > toMinutes(start)).map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </Labeled>
-        </div>
-      </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Nome / grupo">
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="Ex.: Ensaio Banda Juvenil"
+              />
+            </Field>
+            <Field label="Dia da semana">
+              <Select value={weekday} onChange={(e) => setWeekday(Number(e.target.value))}>
+                {WEEKDAY_LABELS.map((w, i) => (
+                  <option key={w} value={i}>{w}</option>
+                ))}
+              </Select>
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Início">
+                <Select value={start} onChange={(e) => changeStart(e.target.value)} className="numeral">
+                  {blocks.map((b) => <option key={b} value={b}>{b}</option>)}
+                </Select>
+              </Field>
+              <Field label="Fim">
+                <Select value={end} onChange={(e) => setEnd(e.target.value)} className="numeral">
+                  {ends.filter((t) => toMinutes(t) > toMinutes(start)).map((t) => <option key={t} value={t}>{t}</option>)}
+                </Select>
+              </Field>
+            </div>
+          </div>
 
-      {error !== null && <p className="text-sm text-red">{error}</p>}
+          {error !== null && <p className="text-sm text-red">{error}</p>}
 
-      {result !== null && (
-        <p className="flex items-center gap-2 text-sm text-free-ink">
-          <CheckCircle size={16} weight="fill" aria-hidden />
-          {result.created} de {result.weeks} semana(s) criada(s)
-          {result.created < result.weeks && " — as restantes já tinham o horário ocupado."}
-        </p>
-      )}
+          {result !== null && (
+            <p className="flex items-center gap-2 text-sm text-free-ink">
+              <CheckCircle size={16} weight="fill" aria-hidden />
+              {result.created} de {result.weeks} semana(s) criada(s)
+              {result.created < result.weeks && " — as restantes já tinham o horário ocupado."}
+            </p>
+          )}
 
-      <div className="flex gap-2">
-        <Button type="submit" size="sm" disabled={pending}>{pending ? "A criar…" : "Criar acontecimento"}</Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => { setOpen(false); setResult(null); }}>Fechar</Button>
-      </div>
-    </form>
-  );
-}
-
-const inputCls = "rounded-sm border border-navy/20 bg-surface-0 px-2.5 py-1.5 text-sm text-navy outline-none focus:border-navy";
-
-function Labeled({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1 text-xs text-text-muted">
-      {label}
-      {children}
-    </label>
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" disabled={pending}>{pending ? "A criar…" : "Criar acontecimento"}</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => { setOpen(false); setResult(null); }}>Fechar</Button>
+          </div>
+        </form>
+      </Overlay>
+    </>
   );
 }

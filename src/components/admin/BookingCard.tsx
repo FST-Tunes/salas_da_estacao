@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, User, Phone, Door, Stack, ArrowsClockwise, CaretDown } from "@phosphor-icons/react";
+import { User, Phone, Door, Stack, ArrowsClockwise, CaretRight, CalendarBlank } from "@phosphor-icons/react";
 import type { Booking, BookingState } from "@/lib/types";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Overlay } from "@/components/ui/Overlay";
 import { BookingActions } from "./BookingActions";
 import { BookingSlotPreview } from "./BookingSlotPreview";
 import { formatRange } from "@/lib/time/blocks";
@@ -52,12 +53,11 @@ export function BookingCard({
           </span>
         )}
         {expandable && (
-          <CaretDown
-            size={14}
-            weight="bold"
-            aria-hidden
-            className={`text-navy-60 transition-transform ${expanded ? "rotate-180" : ""}`}
-          />
+          <span className="ml-auto inline-flex items-center gap-1 text-xs text-navy-60">
+            <CalendarBlank size={13} weight="bold" aria-hidden />
+            <span className="hidden sm:inline">Ver horário</span>
+            <CaretRight size={12} weight="bold" aria-hidden />
+          </span>
         )}
       </div>
       <p className="flex items-center gap-1.5 text-sm text-navy">
@@ -89,15 +89,15 @@ export function BookingCard({
           <div
             role="button"
             tabIndex={0}
-            aria-expanded={expanded}
-            onClick={() => setExpanded((v) => !v)}
+            aria-haspopup="dialog"
+            onClick={() => setExpanded(true)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                setExpanded((v) => !v);
+                setExpanded(true);
               }
             }}
-            className="-m-1 min-w-0 cursor-pointer rounded-md p-1 transition-colors hover:bg-navy/5"
+            className="-m-1 min-w-0 flex-1 cursor-pointer rounded-md p-1 transition-colors hover:bg-navy/5"
           >
             {info}
           </div>
@@ -106,8 +106,16 @@ export function BookingCard({
         )}
       </div>
 
-      {expandable && expanded && (
-        <BookingSlotPreview booking={booking} selectedRoom={selectedRoom} />
+      {expandable && (
+        <Overlay
+          open={expanded}
+          onClose={() => setExpanded(false)}
+          title={`Horário · ${formatRange(booking.startTime, booking.endTime)}`}
+          icon={<CalendarBlank size={18} weight="bold" className="text-gold" aria-hidden />}
+          size="lg"
+        >
+          <BookingSlotPreview booking={booking} selectedRoom={selectedRoom} />
+        </Overlay>
       )}
 
       {showActions && (effective === "pendente" || effective === "aprovada") && (

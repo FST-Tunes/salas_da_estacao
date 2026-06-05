@@ -2,6 +2,7 @@
 
 import { Buildings, Stack, Warning } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Field";
 
 export interface CheckoutSummary {
   roomName: string;
@@ -60,14 +61,14 @@ export function CheckoutPanel({
         <label htmlFor="bk-name" className="text-sm font-medium text-navy">
           Nome <span className="text-red">*</span>
         </label>
-        <input
+        <Input
           id="bk-name"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
           required
           autoComplete="name"
           placeholder="O seu nome"
-          className="w-full rounded-md border border-navy/20 bg-surface-0 px-3 py-2.5 text-navy outline-none placeholder:text-navy-30 focus:border-navy"
+          className="py-2.5"
         />
       </div>
 
@@ -75,14 +76,14 @@ export function CheckoutPanel({
         <label htmlFor="bk-phone" className="text-sm font-medium text-navy">
           Telemóvel <span className="text-text-muted">(opcional)</span>
         </label>
-        <input
+        <Input
           id="bk-phone"
           value={phone}
           onChange={(e) => onPhoneChange(e.target.value)}
           inputMode="tel"
           autoComplete="tel"
           placeholder="+351 …"
-          className="w-full rounded-md border border-navy/20 bg-surface-0 px-3 py-2.5 text-navy outline-none placeholder:text-navy-30 focus:border-navy"
+          className="py-2.5"
         />
         <p className="text-xs text-text-muted">
           Usado apenas para o notificar da decisão. Nunca é mostrado publicamente.

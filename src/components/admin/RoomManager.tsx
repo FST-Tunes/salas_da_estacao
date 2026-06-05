@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, FloppyDisk, EyeSlash, ArrowCounterClockwise, Door, CalendarBlank } from "@phosphor-icons/react";
 import { Button, LinkButton } from "@/components/ui/Button";
+import { Field, Input } from "@/components/ui/Field";
 import {
   createRoomAction,
   renameRoomAction,
@@ -33,15 +34,14 @@ export function RoomManager({ rooms }: { rooms: Room[] }) {
   return (
     <div className="space-y-6">
       <form onSubmit={add} className="flex flex-wrap items-end gap-2 rounded-lg border border-hairline bg-surface-0 p-4">
-        <label className="flex flex-1 flex-col gap-1 text-xs text-text-muted">
-          Nome da nova sala
-          <input
+        <Field label="Nome da nova sala" className="flex-1">
+          <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Ex.: Sala 9 · Estúdio"
-            className="rounded-md border border-navy/20 bg-surface-0 px-3 py-2.5 text-navy outline-none focus:border-navy"
+            className="py-2.5"
           />
-        </label>
+        </Field>
         <Button type="submit" disabled={pending || !newName.trim()}>
           <Plus size={16} weight="bold" /> Adicionar
         </Button>
@@ -75,7 +75,7 @@ function RoomRow({ room, onChange }: { room: Room; onChange: () => void }) {
   const act = (fn: () => Promise<void>) => startTransition(async () => { await fn(); onChange(); });
 
   return (
-    <li className={`flex flex-wrap items-center gap-2 rounded-md border border-hairline p-3 ${room.active ? "bg-surface-0" : "bg-surface-1 opacity-80"}`}>
+    <li className={`flex flex-wrap items-center gap-2 rounded-md border p-3 ${room.active ? "border-hairline bg-surface-0" : "border-dashed border-navy/15 bg-surface-1"}`}>
       <Door size={18} weight="bold" className="text-navy-60" aria-hidden />
       <input
         value={name}

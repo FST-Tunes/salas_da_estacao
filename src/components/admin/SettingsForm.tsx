@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
+import { Field, Input, Select } from "@/components/ui/Field";
 import { updateSettingsAction } from "@/app/actions/admin";
 import type { AppSettings } from "@/lib/types";
 
@@ -44,34 +45,31 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
           O horário pode depender da disponibilidade de alguém para abrir as instalações.
         </p>
         <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1 text-xs text-text-muted">
-            Abertura
-            <select value={open} onChange={(e) => setOpen(e.target.value)} className={`${selectCls} numeral`}>
+          <Field label="Abertura">
+            <Select value={open} onChange={(e) => setOpen(e.target.value)} className="numeral">
               {TIME_OPTIONS.slice(0, -1).map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-xs text-text-muted">
-            Encerramento
-            <select value={close} onChange={(e) => setClose(e.target.value)} className={`${selectCls} numeral`}>
+            </Select>
+          </Field>
+          <Field label="Encerramento">
+            <Select value={close} onChange={(e) => setClose(e.target.value)} className="numeral">
               {TIME_OPTIONS.slice(1).map((t) => <option key={t} value={t}>{t === "24:00" ? "24:00 (meia-noite)" : t}</option>)}
-            </select>
-          </label>
+            </Select>
+          </Field>
         </div>
       </fieldset>
 
       <fieldset className="space-y-3 rounded-lg border border-hairline bg-surface-0 p-5">
         <legend className="px-1 text-sm font-medium text-gold">Antecedência máxima de reserva</legend>
-        <label className="flex flex-col gap-1 text-xs text-text-muted">
-          Dias
-          <input
+        <Field label="Dias" className="max-w-28">
+          <Input
             type="number"
             min={1}
             max={365}
             value={advance}
             onChange={(e) => setAdvance(Number(e.target.value))}
-            className={`${selectCls} numeral w-28`}
+            className="numeral"
           />
-        </label>
+        </Field>
         <p className="text-sm text-text-muted">Até quantos dias no futuro o público pode pedir uma reserva.</p>
       </fieldset>
 
@@ -86,5 +84,3 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
     </form>
   );
 }
-
-const selectCls = "rounded-md border border-navy/20 bg-surface-0 px-3 py-2 text-navy outline-none focus:border-navy";

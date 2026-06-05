@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowsClockwise, CheckCircle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
+import { Overlay } from "@/components/ui/Overlay";
+import { Field, Input, Select } from "@/components/ui/Field";
 import { addDays, weekdayOf, WEEKDAY_LABELS } from "@/lib/time/dates";
 import { toMinutes } from "@/lib/time/blocks";
 import { createRecurringAction } from "@/app/actions/admin";
@@ -69,84 +71,73 @@ export function RecurringForm({ rooms, blocks, ends }: Props) {
     });
   }
 
-  if (!open) {
-    return (
+  return (
+    <>
       <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
         <ArrowsClockwise size={15} weight="bold" /> Adicionar reserva semanal
       </Button>
-    );
-  }
 
-  return (
-    <form onSubmit={submit} className="space-y-4 rounded-lg border border-hairline bg-surface-0 p-5">
-      <div className="flex items-center gap-2">
-        <ArrowsClockwise size={18} weight="bold" className="text-gold" aria-hidden />
-        <h3 className="font-display text-lg text-navy">Reserva semanal</h3>
-      </div>
+      <Overlay
+        open={open}
+        onClose={() => { setOpen(false); setCreated(null); }}
+        title="Reserva semanal"
+        icon={<ArrowsClockwise size={18} weight="bold" className="text-gold" aria-hidden />}
+        size="md"
+      >
+        <form onSubmit={submit} className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Sala">
+              <Select value={roomId} onChange={(e) => setRoomId(e.target.value)}>
+                {rooms.map((r) => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Nome / grupo">
+              <Input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Ex.: Banda Juvenil EMM" />
+            </Field>
+            <Field label="Dia da semana">
+              <Select value={weekday} onChange={(e) => setWeekday(Number(e.target.value))}>
+                {WEEKDAY_LABELS.map((w, i) => (
+                  <option key={w} value={i}>{w}</option>
+                ))}
+              </Select>
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Início">
+                <Select value={start} onChange={(e) => changeStart(e.target.value)} className="numeral">
+                  {blocks.map((b) => <option key={b} value={b}>{b}</option>)}
+                </Select>
+              </Field>
+              <Field label="Fim">
+                <Select value={end} onChange={(e) => setEnd(e.target.value)} className="numeral">
+                  {ends.filter((t) => toMinutes(t) > toMinutes(start)).map((t) => <option key={t} value={t}>{t}</option>)}
+                </Select>
+              </Field>
+            </div>
+            <Field label="De">
+              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} required className="numeral" />
+            </Field>
+            <Field label="Até">
+              <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} required className="numeral" />
+            </Field>
+          </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Labeled label="Sala">
-          <select value={roomId} onChange={(e) => setRoomId(e.target.value)} className={selectCls}>
-            {rooms.map((r) => (
-              <option key={r.id} value={r.id}>{r.name}</option>
-            ))}
-          </select>
-        </Labeled>
-        <Labeled label="Nome / grupo">
-          <input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Ex.: Banda Juvenil EMM" className={inputCls} />
-        </Labeled>
-        <Labeled label="Dia da semana">
-          <select value={weekday} onChange={(e) => setWeekday(Number(e.target.value))} className={selectCls}>
-            {WEEKDAY_LABELS.map((w, i) => (
-              <option key={w} value={i}>{w}</option>
-            ))}
-          </select>
-        </Labeled>
-        <div className="grid grid-cols-2 gap-3">
-          <Labeled label="Início">
-            <select value={start} onChange={(e) => changeStart(e.target.value)} className={`${selectCls} numeral`}>
-              {blocks.map((b) => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </Labeled>
-          <Labeled label="Fim">
-            <select value={end} onChange={(e) => setEnd(e.target.value)} className={`${selectCls} numeral`}>
-              {ends.filter((t) => toMinutes(t) > toMinutes(start)).map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </Labeled>
-        </div>
-        <Labeled label="De">
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} required className={`${inputCls} numeral`} />
-        </Labeled>
-        <Labeled label="Até">
-          <input type="date" value={until} onChange={(e) => setUntil(e.target.value)} required className={`${inputCls} numeral`} />
-        </Labeled>
-      </div>
+          {error !== null && <p className="text-sm text-red">{error}</p>}
 
-      {error !== null && <p className="text-sm text-red">{error}</p>}
+          {created !== null && (
+            <p className="flex items-center gap-2 text-sm text-free-ink">
+              <CheckCircle size={16} weight="fill" aria-hidden />
+              {created} reserva(s) criada(s).
+            </p>
+          )}
 
-      {created !== null && (
-        <p className="flex items-center gap-2 text-sm text-free-ink">
-          <CheckCircle size={16} weight="fill" aria-hidden />
-          {created} reserva(s) criada(s).
-        </p>
-      )}
-
-      <div className="flex gap-2">
-        <Button type="submit" size="sm" disabled={pending}>{pending ? "A criar…" : "Criar reservas"}</Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => { setOpen(false); setCreated(null); }}>Fechar</Button>
-      </div>
-    </form>
-  );
-}
-
-const inputCls = "rounded-sm border border-navy/20 bg-surface-0 px-2.5 py-1.5 text-sm text-navy outline-none focus:border-navy";
-const selectCls = inputCls;
-
-function Labeled({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1 text-xs text-text-muted">
-      {label}
-      {children}
-    </label>
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" disabled={pending}>{pending ? "A criar…" : "Criar reservas"}</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => { setOpen(false); setCreated(null); }}>Fechar</Button>
+          </div>
+        </form>
+      </Overlay>
+    </>
   );
 }

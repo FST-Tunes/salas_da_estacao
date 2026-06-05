@@ -50,7 +50,7 @@ export function BookingSlotPreview({ booking, selectedRoom }: Props) {
 
   if (loading) {
     return (
-      <p className="mt-3 flex items-center gap-2 text-sm text-text-muted">
+      <p className="flex items-center gap-2 py-8 text-sm text-text-muted">
         <CircleNotch size={15} weight="bold" className="animate-spin" aria-hidden />
         A carregar disponibilidade…
       </p>
@@ -59,7 +59,7 @@ export function BookingSlotPreview({ booking, selectedRoom }: Props) {
 
   if (error || !avail) {
     return (
-      <p className="mt-3 flex items-center gap-2 text-sm text-busy-ink">
+      <p className="flex items-center gap-2 py-8 text-sm text-busy-ink">
         <Warning size={14} weight="bold" aria-hidden />
         {error ?? "Sem dados de disponibilidade."}
       </p>
@@ -71,7 +71,7 @@ export function BookingSlotPreview({ booking, selectedRoom }: Props) {
   // the request's own data is unavailable rather than the wrong day's slots.
   if (avail.date !== booking.date) {
     return (
-      <p className="mt-3 flex items-center gap-2 text-sm text-busy-ink">
+      <p className="flex items-center gap-2 py-8 text-sm text-busy-ink">
         <Warning size={14} weight="bold" aria-hidden />
         Esta data está fora da janela de disponibilidade pública.
       </p>
@@ -97,7 +97,7 @@ export function BookingSlotPreview({ booking, selectedRoom }: Props) {
   );
 
   return (
-    <div className="mt-3 space-y-3 rounded-md border border-hairline bg-surface-1 p-3">
+    <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs font-medium text-navy">
           {room?.name ?? "Sala"} · {booking.startTime}–{booking.endTime}

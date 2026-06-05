@@ -10,6 +10,7 @@ import { TimeStep } from "./TimeStep";
 import { CheckoutPanel, type CheckoutSummary } from "./CheckoutPanel";
 import { Legend } from "@/components/schedule/Legend";
 import { Button } from "@/components/ui/Button";
+import { Overlay } from "@/components/ui/Overlay";
 import { SectionTitle } from "@/components/brand/SectionTitle";
 import { getDayAvailability, type DayAvailability } from "@/app/actions/availability";
 import { submitBooking } from "@/app/actions/booking";
@@ -262,36 +263,30 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
             </div>
           )}
 
-          {/* Mobile: only after confirming does the name/phone sheet appear. */}
-          {summary && timeConfirmed && (
-            <aside className="fixed inset-x-0 bottom-0 z-30 lg:hidden">
-              <div className="max-h-[80vh] overflow-y-auto rounded-t-xl border border-hairline bg-surface-0 p-5 shadow-md">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <h3 className="font-display text-lg text-navy">O seu pedido</h3>
-                  <button
-                    type="button"
-                    onClick={() => setTimeConfirmed(false)}
-                    className="text-sm text-text-muted underline underline-offset-2"
-                  >
-                    Alterar horário
-                  </button>
-                </div>
-                <CheckoutPanel
-                  summary={summary}
-                  name={name}
-                  phone={phone}
-                  onNameChange={setName}
-                  onPhoneChange={setPhone}
-                  onSubmit={submit}
-                  pending={pending}
-                  error={error}
-                />
-              </div>
-            </aside>
+          {/* Mobile: only after confirming does the name/phone sheet appear, as
+              a portal bottom-sheet (scroll-locked, never reflows the grid). */}
+          {summary && (
+            <Overlay
+              open={timeConfirmed}
+              onClose={() => setTimeConfirmed(false)}
+              title="O seu pedido"
+              variant="sheet"
+            >
+              <CheckoutPanel
+                summary={summary}
+                name={name}
+                phone={phone}
+                onNameChange={setName}
+                onPhoneChange={setPhone}
+                onSubmit={submit}
+                pending={pending}
+                error={error}
+              />
+            </Overlay>
           )}
 
-          {/* Spacer so the fixed mobile bottom UI never hides the last chips. */}
-          {summary && <div aria-hidden className="h-24 lg:hidden" />}
+          {/* Spacer so the fixed mobile "Selecionar" bar never hides the last chips. */}
+          {summary && !timeConfirmed && <div aria-hidden className="h-24 lg:hidden" />}
         </StepShell>
       )}
     </div>
