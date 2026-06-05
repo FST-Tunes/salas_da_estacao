@@ -7,6 +7,7 @@ import type { Booking, BookingState } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Overlay } from "@/components/ui/Overlay";
 import { Field, Select } from "@/components/ui/Field";
+import { BookingSlotPreview } from "./BookingSlotPreview";
 import { blockEnd, toMinutes, formatRange } from "@/lib/time/blocks";
 import {
   approveAction,
@@ -133,9 +134,9 @@ export function BookingActions({
       <Overlay
         open={editing}
         onClose={() => setEditing(false)}
-        title="Editar / mover reserva"
+        title={isBlock ? "Editar bloqueio" : "Editar / mover reserva"}
         icon={<PencilSimple size={18} weight="bold" className="text-gold" aria-hidden />}
-        size="md"
+        size="lg"
       >
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-3">
@@ -149,7 +150,15 @@ export function BookingActions({
             <Field label="Início">
               <Select
                 value={start}
-                onChange={(e) => setStart(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setStart(next);
+                  // Keep the end after the start so the preview selection stays valid.
+                  if (toMinutes(end) <= toMinutes(next)) {
+                    const nextEnd = ends.find((t) => toMinutes(t) > toMinutes(next));
+                    if (nextEnd) setEnd(nextEnd);
+                  }
+                }}
                 className="numeral"
               >
                 {blocks.map((b) => (
@@ -171,6 +180,18 @@ export function BookingActions({
               </Select>
             </Field>
           </div>
+
+          {/* Live availability for the picked room + day, hugging the new range.
+              Excludes this booking so its own current slot reads as free. */}
+          <div className="rounded-lg border border-hairline bg-surface-1/40 p-3">
+            <BookingSlotPreview
+              booking={{ date: booking.date, startTime: start, endTime: end, roomId: booking.roomId }}
+              selectedRoom={assignRoom}
+              excludeBookingId={booking.id}
+              editing
+            />
+          </div>
+
           {error && (
             <p className="flex items-center gap-2 text-sm text-busy-ink">
               <Warning size={14} weight="bold" aria-hidden />

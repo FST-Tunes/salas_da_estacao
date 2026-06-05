@@ -12,6 +12,14 @@ interface Props {
   booking: Pick<Booking, "date" | "startTime" | "endTime" | "roomId">;
   /** Room to show, driven by the assignment dropdown in the actions below. */
   selectedRoom: string;
+  /**
+   * Edit/move mode: always show the fit badge and let the real free/busy show
+   * through the selection (instead of the solid-navy "own room" fill), so the
+   * admin can judge the new room/time as they change it.
+   */
+  editing?: boolean;
+  /** Drop this booking from the availability calc (its own slots read as free). */
+  excludeBookingId?: string;
 }
 
 /**
@@ -24,7 +32,7 @@ interface Props {
  * "qualquer sala" requests (roomId === null) picking a room there immediately
  * shows that room's availability for the same day.
  */
-export function BookingSlotPreview({ booking, selectedRoom }: Props) {
+export function BookingSlotPreview({ booking, selectedRoom, editing = false, excludeBookingId }: Props) {
   const [avail, setAvail] = useState<DayAvailability | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +41,7 @@ export function BookingSlotPreview({ booking, selectedRoom }: Props) {
     let alive = true;
     setLoading(true);
     setError(null);
-    getDayAvailability(booking.date)
+    getDayAvailability(booking.date, excludeBookingId)
       .then((data) => {
         if (alive) setAvail(data);
       })
@@ -46,7 +54,7 @@ export function BookingSlotPreview({ booking, selectedRoom }: Props) {
     return () => {
       alive = false;
     };
-  }, [booking.date]);
+  }, [booking.date, excludeBookingId]);
 
   if (loading) {
     return (
@@ -103,7 +111,7 @@ export function BookingSlotPreview({ booking, selectedRoom }: Props) {
           {room?.name ?? "Sala"} · {booking.startTime}–{booking.endTime}
         </span>
 
-        {!ownRoom &&
+        {(editing || !ownRoom) &&
           (selectionFree ? (
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-free-ink">
               <Check size={13} weight="bold" aria-hidden /> Livre nesta sala
@@ -124,31 +132,34 @@ export function BookingSlotPreview({ booking, selectedRoom }: Props) {
           const cell = cells[idx] ?? { state: "off" as SlotState, label: null };
           const selected = inSelection(start);
           const free = cell.state === "free";
-          const LockedIcon = free ? null : LOCKED_ICON[cell.state as "pending" | "busy" | "off"];
+          const LockedIcon = free ? null : LOCKED_ICON[cell.state as "pending" | "busy" | "off" | "blocked"];
+          // Solid-navy fill is the wizard's "own room" selection. In edit mode we
+          // drop it so the real free/busy stays visible while the admin retimes.
+          const solidNavy = selected && ownRoom && !editing;
+          const braced = selected && !solidNavy;
           // Booker name on the first block of an occupied run — shown to the admin
-          // too, except on the solid-navy "own room" selection (it's this booking).
+          // too, except where the solid-navy selection covers it (it's this booking).
           const namedSlot =
-            !!cell.label && (cell.state === "busy" || cell.state === "pending") && !(selected && ownRoom);
+            !!cell.label && (cell.state === "busy" || cell.state === "pending") && !solidNavy;
 
-          // Own room → solid navy selection (matches the booking wizard).
-          // Other room → keep real state, hug with a navy brace ring so the
-          // underlying free/busy stays readable.
-          const cls = selected
-            ? ownRoom
-              ? "border-navy bg-navy text-text-on-dark"
-              : `border-navy ${STATE_CLS[cell.state]} ring-1 ring-navy`
-            : `border-transparent ${STATE_CLS[cell.state]}`;
+          // Solid navy = own-room selection (approve flow). Otherwise keep the real
+          // state and hug it with a navy brace ring so free/busy stays readable.
+          const cls = solidNavy
+            ? "border-navy bg-navy text-text-on-dark"
+            : braced
+              ? `border-navy ${STATE_CLS[cell.state]} ring-1 ring-navy`
+              : `border-transparent ${STATE_CLS[cell.state]}`;
 
           return (
             <div
               key={start}
               role="gridcell"
               aria-label={`${start} a ${blockEnd(start)}${
-                selected ? ", pedido" : free ? ", disponível" : cell.state === "busy" ? `, ocupado por ${cell.label}` : cell.state === "pending" ? `, pendente — ${cell.label}` : ", indisponível"
+                selected ? (editing ? ", selecionado" : ", pedido") : free ? ", disponível" : cell.state === "busy" ? `, ocupado por ${cell.label}` : cell.state === "pending" ? `, pendente — ${cell.label}` : ", indisponível"
               }`}
               className={`numeral relative flex h-12 items-center justify-center gap-1.5 rounded-md border px-1.5 text-xs font-medium tabular-nums ${cls}`}
             >
-              {selected && !ownRoom && (
+              {braced && (
                 <>
                   <span className="absolute left-1 font-display text-base text-navy" aria-hidden>{`{`}</span>
                   <span className="absolute right-1 font-display text-base text-navy" aria-hidden>{`}`}</span>
@@ -166,7 +177,7 @@ export function BookingSlotPreview({ booking, selectedRoom }: Props) {
                 </span>
               ) : (
                 <>
-                  {selected && ownRoom ? (
+                  {solidNavy ? (
                     <Check size={12} weight="bold" aria-hidden />
                   ) : (
                     LockedIcon && <LockedIcon size={12} weight="bold" aria-hidden />

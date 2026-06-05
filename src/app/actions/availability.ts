@@ -37,8 +37,16 @@ export interface DayAvailability {
   anyFreeBlocks: number;
 }
 
-/** Clamp + fetch the availability model for a day. Date is validated server-side. */
-export async function getDayAvailability(dateInput: string): Promise<DayAvailability> {
+/**
+ * Clamp + fetch the availability model for a day. Date is validated server-side.
+ * `excludeBookingId` drops one booking from the calculation — used by the admin
+ * edit/move preview so a booking's own slots read as free to itself (the admin
+ * can see where it can move/extend without colliding with its current position).
+ */
+export async function getDayAvailability(
+  dateInput: string,
+  excludeBookingId?: string,
+): Promise<DayAvailability> {
   const today = todayISO();
   const [settings, rooms] = await Promise.all([getSettings(), getRooms()]);
   const maxDate = addDays(today, settings.maxAdvanceDays);
@@ -47,7 +55,10 @@ export async function getDayAvailability(dateInput: string): Promise<DayAvailabi
   if (date < today) date = today;
   if (date > maxDate) date = maxDate;
 
-  const bookings = await getPublicBookingsForDate(date);
+  const allBookings = await getPublicBookingsForDate(date);
+  const bookings = excludeBookingId
+    ? allBookings.filter((b) => b.id !== excludeBookingId)
+    : allBookings;
   const model = buildGridModel(rooms, bookings, settings, date);
 
   const roomAvail: RoomAvailability[] = rooms.map((room) => {
