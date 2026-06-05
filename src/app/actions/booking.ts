@@ -27,6 +27,10 @@ export async function submitBooking(input: SubmitBookingInput): Promise<SubmitRe
   }
 
   const phone = input.phone?.trim() ? input.phone.trim() : null;
+  // O telemóvel é obrigatório — necessário para notificar a decisão.
+  if (!phone || phone.replace(/\D/g, "").length < 6) {
+    return { ok: false, error: "Indique um telemóvel válido." };
+  }
 
   const result = await createBookingRequest({
     bookerName: name,

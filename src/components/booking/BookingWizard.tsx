@@ -41,6 +41,7 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
   const [selection, setSelection] = useState<SlotRun | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [dialCode, setDialCode] = useState("+351");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   // Mobile only: gates the name/phone form behind a "Selecionar" confirmation
@@ -106,11 +107,16 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
       setError("Indique o seu nome.");
       return;
     }
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 6) {
+      setError("Indique um telemóvel válido.");
+      return;
+    }
     setError(null);
     startTransition(async () => {
       const result = await submitBooking({
         bookerName: name,
-        phone: phone || null,
+        phone: `${dialCode} ${phone.trim()}`,
         date,
         startTime,
         endTime,
@@ -134,6 +140,7 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
     setSelection(null);
     setName("");
     setPhone("");
+    setDialCode("+351");
     setError(null);
     setDone(false);
     setTimeConfirmed(false);
@@ -172,12 +179,12 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
     return (
       <div className="mx-auto max-w-md rounded-lg border border-hairline bg-surface-0 p-8 text-center shadow-sm">
         <CheckCircle size={48} weight="fill" className="mx-auto text-free-ink" aria-hidden />
-        <SectionTitle as="h2" className="mt-3 text-2xl text-navy">
+        <SectionTitle as="h2" className="mt-3 justify-center text-2xl text-navy">
           Pedido submetido
         </SectionTitle>
         <p className="mt-2 text-sm text-text-muted">
-          O seu pedido fica <strong className="text-navy">pendente</strong> até aprovação. Se indicou
-          o telemóvel, será notificado da decisão.
+          O seu pedido fica <strong className="text-navy">pendente</strong> até aprovação. Será
+          notificado da decisão pelo telemóvel indicado.
         </p>
         <Button variant="secondary" onClick={startOver} className="mt-5">
           Fazer outro pedido
@@ -242,8 +249,10 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
                     summary={summary}
                     name={name}
                     phone={phone}
+                    dialCode={dialCode}
                     onNameChange={setName}
                     onPhoneChange={setPhone}
+                    onDialCodeChange={setDialCode}
                     onSubmit={submit}
                     pending={pending}
                     error={error}
@@ -276,8 +285,10 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
                 summary={summary}
                 name={name}
                 phone={phone}
+                dialCode={dialCode}
                 onNameChange={setName}
                 onPhoneChange={setPhone}
+                onDialCodeChange={setDialCode}
                 onSubmit={submit}
                 pending={pending}
                 error={error}

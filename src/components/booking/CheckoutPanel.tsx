@@ -12,6 +12,25 @@ export interface CheckoutSummary {
   durationLabel: string;
 }
 
+/** Indicativos disponíveis (Portugal por omissão). */
+export const DIAL_CODES = [
+  { code: "+351", label: "🇵🇹 +351" },
+  { code: "+34", label: "🇪🇸 +34" },
+  { code: "+33", label: "🇫🇷 +33" },
+  { code: "+44", label: "🇬🇧 +44" },
+  { code: "+49", label: "🇩🇪 +49" },
+  { code: "+39", label: "🇮🇹 +39" },
+  { code: "+41", label: "🇨🇭 +41" },
+  { code: "+352", label: "🇱🇺 +352" },
+  { code: "+31", label: "🇳🇱 +31" },
+  { code: "+32", label: "🇧🇪 +32" },
+  { code: "+55", label: "🇧🇷 +55" },
+  { code: "+1", label: "🇺🇸 +1" },
+] as const;
+
+const dialSelectCls =
+  "shrink-0 rounded-md border border-navy/20 bg-surface-0 px-2.5 py-2.5 text-sm text-navy outline-none transition-colors focus:border-navy";
+
 /**
  * Step 4 — checkout. Docks to the bottom on mobile and to the side on desktop
  * once at least one slot is selected. Shows a one-line résumé above a single
@@ -21,8 +40,10 @@ export function CheckoutPanel({
   summary,
   name,
   phone,
+  dialCode,
   onNameChange,
   onPhoneChange,
+  onDialCodeChange,
   onSubmit,
   pending,
   error,
@@ -30,8 +51,10 @@ export function CheckoutPanel({
   summary: CheckoutSummary;
   name: string;
   phone: string;
+  dialCode: string;
   onNameChange: (v: string) => void;
   onPhoneChange: (v: string) => void;
+  onDialCodeChange: (v: string) => void;
   onSubmit: () => void;
   pending: boolean;
   error: string | null;
@@ -74,17 +97,30 @@ export function CheckoutPanel({
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="bk-phone" className="text-sm font-medium text-navy">
-          Telemóvel <span className="text-text-muted">(opcional)</span>
+          Telemóvel <span className="text-red">*</span>
         </label>
-        <Input
-          id="bk-phone"
-          value={phone}
-          onChange={(e) => onPhoneChange(e.target.value)}
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder="+351 …"
-          className="py-2.5"
-        />
+        <div className="flex gap-2">
+          <select
+            value={dialCode}
+            onChange={(e) => onDialCodeChange(e.target.value)}
+            aria-label="Indicativo do país"
+            className={`numeral ${dialSelectCls}`}
+          >
+            {DIAL_CODES.map((d) => (
+              <option key={d.code} value={d.code}>{d.label}</option>
+            ))}
+          </select>
+          <Input
+            id="bk-phone"
+            value={phone}
+            onChange={(e) => onPhoneChange(e.target.value)}
+            required
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="912 345 678"
+            className="py-2.5"
+          />
+        </div>
         <p className="text-xs text-text-muted">
           Usado apenas para o notificar da decisão. Nunca é mostrado publicamente.
         </p>

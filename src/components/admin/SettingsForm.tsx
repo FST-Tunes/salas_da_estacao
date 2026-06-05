@@ -40,7 +40,8 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
   return (
     <form onSubmit={save} className="max-w-xl space-y-6">
       <fieldset className="space-y-3 rounded-lg border border-hairline bg-surface-0 p-5">
-        <legend className="px-1 text-sm font-medium text-gold">Horário de funcionamento</legend>
+        <legend className="sr-only">Horário de funcionamento</legend>
+        <h2 className="text-sm font-medium text-gold" aria-hidden>Horário de funcionamento</h2>
         <p className="text-sm text-text-muted">
           O horário pode depender da disponibilidade de alguém para abrir as instalações.
         </p>
@@ -59,7 +60,8 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
       </fieldset>
 
       <fieldset className="space-y-3 rounded-lg border border-hairline bg-surface-0 p-5">
-        <legend className="px-1 text-sm font-medium text-gold">Antecedência máxima de reserva</legend>
+        <legend className="sr-only">Antecedência máxima de reserva</legend>
+        <h2 className="text-sm font-medium text-gold" aria-hidden>Antecedência máxima de reserva</h2>
         <Field label="Dias" className="max-w-28">
           <Input
             type="number"
