@@ -80,7 +80,7 @@ export function BookingActions({
                 value={assignRoom}
                 onChange={(e) => setAssignRoom(e.target.value)}
                 aria-label="Atribuir sala"
-                className="h-9 rounded-md border border-navy/20 bg-surface-0 px-2.5 text-sm text-navy outline-none transition-colors focus:border-navy"
+                className="h-9 w-full rounded-md border border-navy/20 bg-surface-0 px-2.5 text-sm text-navy outline-none transition-colors focus:border-navy sm:w-auto"
               >
                 {rooms.map((r) => (
                   <option key={r.id} value={r.id}>{r.name}</option>

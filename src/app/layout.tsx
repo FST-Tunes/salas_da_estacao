@@ -40,6 +40,9 @@ export const viewport: Viewport = {
   themeColor: "#1D1A55",
   width: "device-width",
   initialScale: 1,
+  // Extend under the iOS notch / home indicator so safe-area insets resolve to
+  // real values; fixed bottom bars and sheets pad themselves with env(...).
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

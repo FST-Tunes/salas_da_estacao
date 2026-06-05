@@ -29,13 +29,13 @@ export function WizardSteps({
   onJump: (step: number) => void;
 }) {
   return (
-    <ol className="flex flex-wrap items-stretch gap-2" aria-label="Passos da reserva">
+    <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Passos da reserva">
       {steps.map((s, i) => {
         const n = i + 1;
         const isCurrent = n === current;
         const clickable = s.reachable && !isCurrent;
         return (
-          <li key={s.label} className="min-w-0 flex-1 basis-[7rem]">
+          <li key={s.label} className="min-w-0">
             <button
               type="button"
               disabled={!clickable}

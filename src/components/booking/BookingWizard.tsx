@@ -265,7 +265,7 @@ export function BookingWizard({ today, maxDate }: { today: string; maxDate: stri
           {/* Mobile: while a slot is selected but not confirmed, show a floating
               "Selecionar" bar so the user can keep picking more slots. */}
           {summary && !timeConfirmed && (
-            <div className="fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface-0 p-4 shadow-md lg:hidden">
+            <div className="pb-safe-4 fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface-0 px-4 pt-4 shadow-md lg:hidden">
               <Button onClick={() => setTimeConfirmed(true)} className="w-full">
                 Selecionar · {summary.rangeLabel}
               </Button>

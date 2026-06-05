@@ -62,6 +62,8 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    /* Avoid horizontal jitter from off-canvas decorations on small screens. */
+    overflow-x: hidden;
   }
 
   body {
@@ -71,6 +73,19 @@
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+  }
+
+  /* Touch devices: kill the 300ms tap delay and the grey tap flash so the
+     schedule grid and pickers feel native. */
+  @media (hover: none) {
+    button,
+    [role="button"],
+    a[href],
+    label[for],
+    summary {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
   }
 
   h1,
@@ -145,6 +160,21 @@
 }
 .brace-frame::after {
   content: "}";
+}
+
+/*
+  iOS safe-area helpers. viewport-fit=cover (layout.tsx) lets these env() values
+  resolve to the notch / home-indicator insets; elsewhere they fall back to 0.
+*/
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+/* For fixed bottom bars: keep the documented padding AND clear the home bar. */
+@utility pb-safe-4 {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
 }
 
 @media (prefers-reduced-motion: reduce) {

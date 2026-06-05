@@ -49,7 +49,7 @@ function FloorRoomButton({
           : `${room.name}, ${freeTimeLabel(room.freeBlocks)}`
       }
       style={colSpan ? { gridColumn: `span ${colSpan}` } : undefined}
-      className={`group relative flex min-h-[8rem] flex-col justify-between overflow-hidden rounded-lg border p-3 text-left transition-all duration-200 ${
+      className={`group relative flex min-h-[6.5rem] flex-col justify-between overflow-hidden rounded-lg border p-3 text-left transition-all duration-200 sm:min-h-[8rem] ${
         soldOut
           ? "cursor-default border-hairline bg-surface-1/50 opacity-50"
           : "border-hairline bg-surface-0 shadow-sm hover:border-navy/60 hover:bg-navy hover:shadow-lg"
@@ -201,43 +201,51 @@ export function RoomStep({
         </div>
       )}
 
-      {/* Floor plan of upstairs rooms */}
+      {/* Upstairs rooms. The stylised floor plan packs rooms tightly, which is
+          unreadable on a phone — so phones get a plain 2-column grid, and the
+          floor-plan layout only kicks in from sm upwards. */}
       {upstairs.length > 0 && (
-        <div
-          role="group"
-          aria-label="Planta do piso de cima"
-          className="rounded-xl border border-hairline bg-surface-1/40 p-3 space-y-2"
-        >
-          {/* Row 1 — small | wide | small */}
-          {row1.length > 0 && (
-            <div className="grid grid-cols-10 gap-2">
-              {row1.map((room, i) => (
-                <FloorRoomButton
-                  key={room.id}
-                  room={room}
-                  colSpan={ROW1_SPANS[i] ?? 3}
-                  onPick={onPick}
-                />
-              ))}
-            </div>
-          )}
+        <>
+          {/* Mobile: readable 2-column grid */}
+          <div className="grid grid-cols-2 gap-2.5 sm:hidden">
+            {upstairs.map((room) => (
+              <FloorRoomButton key={room.id} room={room} onPick={onPick} />
+            ))}
+          </div>
 
-          {/* Row 2 — five equal rooms */}
-          {row2.length > 0 && (
-            <div
-              className="grid gap-2"
-              style={{ gridTemplateColumns: `repeat(${row2.length}, minmax(0, 1fr))` }}
-            >
-              {row2.map((room) => (
-                <FloorRoomButton
-                  key={room.id}
-                  room={room}
-                  onPick={onPick}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+          {/* sm+: stylised floor plan */}
+          <div
+            role="group"
+            aria-label="Planta do piso de cima"
+            className="hidden rounded-xl border border-hairline bg-surface-1/40 p-3 space-y-2 sm:block"
+          >
+            {/* Row 1 — small | wide | small */}
+            {row1.length > 0 && (
+              <div className="grid grid-cols-10 gap-2">
+                {row1.map((room, i) => (
+                  <FloorRoomButton
+                    key={room.id}
+                    room={room}
+                    colSpan={ROW1_SPANS[i] ?? 3}
+                    onPick={onPick}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Row 2 — equal-width rooms */}
+            {row2.length > 0 && (
+              <div
+                className="grid gap-2"
+                style={{ gridTemplateColumns: `repeat(${row2.length}, minmax(0, 1fr))` }}
+              >
+                {row2.map((room) => (
+                  <FloorRoomButton key={room.id} room={room} onPick={onPick} />
+                ))}
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

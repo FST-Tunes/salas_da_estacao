@@ -196,7 +196,12 @@ export function Overlay({
             </button>
           </div>
         )}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
+        <div
+          className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 ${
+            // Bottom sheets touch the screen edge — clear the iOS home indicator.
+            isDialog ? "" : "pb-safe-4"
+          }`}
+        >
           {children}
         </div>
       </div>
