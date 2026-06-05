@@ -72,7 +72,7 @@ export function RecurringForm({ rooms, blocks, ends }: Props) {
   if (!open) {
     return (
       <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
-        <ArrowsClockwise size={15} weight="bold" /> Nova reserva recorrente
+        <ArrowsClockwise size={15} weight="bold" /> Adicionar reserva semanal
       </Button>
     );
   }
@@ -81,7 +81,7 @@ export function RecurringForm({ rooms, blocks, ends }: Props) {
     <form onSubmit={submit} className="space-y-4 rounded-lg border border-hairline bg-surface-0 p-5">
       <div className="flex items-center gap-2">
         <ArrowsClockwise size={18} weight="bold" className="text-gold" aria-hidden />
-        <h3 className="font-display text-lg text-navy">Reserva recorrente</h3>
+        <h3 className="font-display text-lg text-navy">Reserva semanal</h3>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
