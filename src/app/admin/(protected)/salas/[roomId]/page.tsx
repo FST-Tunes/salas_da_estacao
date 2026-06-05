@@ -72,8 +72,6 @@ export default async function RoomSchedulePage({
         </span>
       </div>
 
-      <RoomWeekGrid model={model} today={today} />
-
       {room.active ? (
         <RoomEventForm roomId={room.id} roomName={room.name} blocks={blocks} ends={ends} />
       ) : (
@@ -81,6 +79,8 @@ export default async function RoomSchedulePage({
           Esta sala foi removida — restaure-a na lista de salas para adicionar acontecimentos.
         </p>
       )}
+
+      <RoomWeekGrid model={model} today={today} />
     </div>
   );
 }
