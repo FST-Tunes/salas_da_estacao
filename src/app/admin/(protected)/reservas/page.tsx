@@ -3,6 +3,7 @@ import { SectionTitle } from "@/components/brand/SectionTitle";
 import { DateNav } from "@/components/schedule/DateNav";
 import { BookingCard } from "@/components/admin/BookingCard";
 import { RecurringForm } from "@/components/admin/RecurringForm";
+import { BlockForm } from "@/components/admin/BlockForm";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getBookingsForDate, getRooms, getSettings, effectiveState } from "@/lib/data/repository";
 import { STATE_LABELS } from "@/lib/domain/booking";
@@ -56,7 +57,10 @@ export default async function ReservasPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="font-display text-2xl text-navy">Reservas</h1>
-        <RecurringForm rooms={activeRooms} blocks={blocks} ends={ends} />
+        <div className="flex flex-wrap gap-2">
+          <BlockForm rooms={activeRooms} blocks={blocks} ends={ends} defaultDate={date} />
+          <RecurringForm rooms={activeRooms} blocks={blocks} ends={ends} />
+        </div>
       </div>
 
       <DateNav date={date} minDate="2000-01-01" maxDate={addDays(today, 365)} basePath="/admin/reservas" />

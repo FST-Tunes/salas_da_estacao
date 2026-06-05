@@ -1,4 +1,4 @@
-import { Check, Clock, Lock, MinusCircle } from "@phosphor-icons/react/dist/ssr";
+import { Check, Clock, Lock, MinusCircle, Prohibit } from "@phosphor-icons/react/dist/ssr";
 
 // Availability legend (design-system.md §3). Colour + icon + label — never
 // colour alone. Mirrors the cell rendering in BlockCell.
@@ -6,6 +6,7 @@ const items = [
   { label: "Disponível", cls: "bg-free-fill text-free-ink", Icon: Check },
   { label: "Pendente", cls: "bg-pending-fill text-pending-ink", Icon: Clock },
   { label: "Ocupada", cls: "bg-busy-fill text-busy-ink", Icon: Lock },
+  { label: "Indisponível", cls: "bg-navy/10 text-navy", Icon: Prohibit },
   { label: "Fora de horário", cls: "bg-off-fill text-off-ink", Icon: MinusCircle },
 ];
 

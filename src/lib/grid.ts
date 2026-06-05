@@ -48,7 +48,7 @@ export function buildGridModel(
       const end = blockEnd(start);
       const state = slotStateFor(bks, room.id, start, end, { isPast: isPastBlock(start), now });
       let label: string | null = null;
-      if (state === "busy" || state === "pending") {
+      if (state === "busy" || state === "pending" || state === "blocked") {
         const owner = bks.find(
           (b) =>
             b.roomId === room.id &&
@@ -125,7 +125,7 @@ export function buildRoomWeekModel(
       const state = slotStateFor(dayBookings, roomId, start, end, { isPast, now });
       let label: string | null = null;
       let recurring = false;
-      if (state === "busy" || state === "pending") {
+      if (state === "busy" || state === "pending" || state === "blocked") {
         const owner = dayBookings.find(
           (b) =>
             (effectiveState(b, now) === "aprovada" || effectiveState(b, now) === "pendente") &&

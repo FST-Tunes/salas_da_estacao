@@ -46,7 +46,7 @@ export function RoomWeekGrid({ model, today }: { model: RoomWeekModel; today: st
             {days.map((d) => {
               const cell = d.cells[i] ?? { state: "off" as const, label: null, recurring: false };
               const free = cell.state === "free";
-              const Icon = free ? null : LOCKED_ICON[cell.state as "pending" | "busy" | "off"];
+              const Icon = free ? null : LOCKED_ICON[cell.state as "pending" | "busy" | "off" | "blocked"];
               return (
                 <div
                   key={d.date}

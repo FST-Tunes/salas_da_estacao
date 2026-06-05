@@ -5,6 +5,7 @@ import { Legend } from "@/components/schedule/Legend";
 import { WeekNav } from "@/components/admin/WeekNav";
 import { RoomWeekGrid } from "@/components/admin/RoomWeekGrid";
 import { RoomEventForm } from "@/components/admin/RoomEventForm";
+import { BlockForm } from "@/components/admin/BlockForm";
 import { getRooms, getSettings, getBookingsInRange } from "@/lib/data/repository";
 import { buildRoomWeekModel } from "@/lib/grid";
 import { blockStarts, blockEnd } from "@/lib/time/blocks";
@@ -73,7 +74,16 @@ export default async function RoomSchedulePage({
       </div>
 
       {room.active ? (
-        <RoomEventForm roomId={room.id} roomName={room.name} blocks={blocks} ends={ends} />
+        <div className="flex flex-wrap gap-2">
+          <RoomEventForm roomId={room.id} roomName={room.name} blocks={blocks} ends={ends} />
+          <BlockForm
+            rooms={[]}
+            blocks={blocks}
+            ends={ends}
+            defaultDate={today}
+            fixedRoom={{ id: room.id, name: room.name }}
+          />
+        </div>
       ) : (
         <p className="text-sm text-text-muted">
           Esta sala foi removida — restaure-a na lista de salas para adicionar acontecimentos.

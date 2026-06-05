@@ -80,7 +80,7 @@ export function TimeStep({
           const cell = cells[idx] ?? { state: "off" as SlotState, label: null };
           const free = cell.state === "free";
           const selected = !!selection && idx >= selection.lo && idx <= selection.hi;
-          const LockedIcon = free ? null : LOCKED_ICON[cell.state as "pending" | "busy" | "off"];
+          const LockedIcon = free ? null : LOCKED_ICON[cell.state as "pending" | "busy" | "off" | "blocked"];
           // Booker name on the first block of an occupied run (public-safe: no phone).
           const namedSlot = !selected && !!cell.label && (cell.state === "busy" || cell.state === "pending");
 

@@ -1,4 +1,4 @@
-import { Lock, Clock, MinusCircle } from "@phosphor-icons/react";
+import { Lock, Clock, MinusCircle, Prohibit } from "@phosphor-icons/react";
 import type { SlotState } from "@/lib/types";
 
 /** Per-state cell fill/text classes, shared by the wizard picker and the
@@ -9,7 +9,15 @@ export const STATE_CLS: Record<SlotState, string> = {
   pending: "bg-pending-fill text-pending-ink",
   busy: "bg-busy-fill text-busy-ink",
   off: "bg-off-fill text-off-ink",
+  // Admin block: navy-tinted so it reads as deliberately unavailable, distinct
+  // from grey off-hours and red approved bookings.
+  blocked: "bg-navy/10 text-navy",
 };
 
 /** Icon per non-free state — never colour alone (design-system §3). */
-export const LOCKED_ICON = { pending: Clock, busy: Lock, off: MinusCircle } as const;
+export const LOCKED_ICON = {
+  pending: Clock,
+  busy: Lock,
+  off: MinusCircle,
+  blocked: Prohibit,
+} as const;

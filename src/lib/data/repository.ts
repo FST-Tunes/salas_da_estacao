@@ -15,6 +15,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { effectiveState, freeRoomsForRange, validateRequest } from "@/lib/domain/booking";
+import { rangesOverlap } from "@/lib/time/blocks";
 import { demoStore } from "./seed";
 
 const hhmm = (t: string) => t.slice(0, 5);
@@ -35,6 +36,7 @@ type BookingRow = {
   end_time: string;
   state: BookingState;
   any_room: boolean;
+  is_block?: boolean | null;
   recurrence_id: string | null;
   created_at: string;
 };
@@ -49,6 +51,7 @@ function mapBooking(b: BookingRow): Booking {
     endTime: hhmm(b.end_time),
     state: b.state,
     anyRoom: b.any_room,
+    isBlock: b.is_block ?? false,
     recurrenceId: b.recurrence_id,
     createdAt: b.created_at,
   };
@@ -233,6 +236,7 @@ export async function createBookingRequest(
       endTime: input.endTime,
       state: "pendente",
       anyRoom: input.anyRoom,
+      isBlock: false,
       recurrenceId: null,
       createdAt: new Date().toISOString(),
     });
@@ -304,6 +308,95 @@ export async function approveBooking(id: string, roomId?: string): Promise<{ ok:
 export const rejectBooking = (id: string) => setState(id, "rejeitada");
 export const cancelBooking = (id: string) => setState(id, "cancelada");
 
+/**
+ * Permanent hard delete. This is the ONE exception to the "history is never
+ * deleted" rule — exposed only behind an explicit, confirmed admin action.
+ */
+export async function deleteBooking(id: string): Promise<void> {
+  if (!isSupabaseConfigured) {
+    const i = demoStore.bookings.findIndex((b) => b.id === id);
+    if (i >= 0) demoStore.bookings.splice(i, 1);
+    return;
+  }
+  const sb = createSupabaseAdminClient();
+  await sb.from("bookings").delete().eq("id", id);
+}
+
+export interface NewBlockInput {
+  /** Specific room, or null to block every active room (whole-venue block). */
+  roomId: string | null;
+  date: string;
+  startTime: string;
+  endTime: string;
+  /** Shown as the block's label; defaults to "Indisponível". */
+  reason?: string;
+}
+
+/**
+ * Create one-off blocks: `aprovada` rows flagged `is_block` so they reuse the
+ * DB overlap lock and the public grid renders them as unavailable. A roomId of
+ * null fans the block out across every active room. Rooms whose slot is already
+ * taken are skipped (the exclusion constraint rejects them) and counted.
+ */
+export async function createBlocks(
+  input: NewBlockInput,
+): Promise<{ created: number; skipped: number }> {
+  const label = input.reason?.trim() || "Indisponível";
+  const rooms = await getRooms();
+  const targets = input.roomId ? [input.roomId] : rooms.map((r) => r.id);
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const roomId of targets) {
+    if (!isSupabaseConfigured) {
+      const clash = demoStore.bookings.some(
+        (b) =>
+          b.roomId === roomId &&
+          b.date === input.date &&
+          (b.state === "pendente" || b.state === "aprovada") &&
+          rangesOverlap(b.startTime, b.endTime, input.startTime, input.endTime),
+      );
+      if (clash) {
+        skipped++;
+        continue;
+      }
+      demoStore.bookings.push({
+        id: demoStore.nextId(),
+        roomId,
+        bookerName: label,
+        phone: null,
+        date: input.date,
+        startTime: input.startTime,
+        endTime: input.endTime,
+        state: "aprovada",
+        anyRoom: false,
+        isBlock: true,
+        recurrenceId: null,
+        createdAt: new Date().toISOString(),
+      });
+      created++;
+      continue;
+    }
+
+    const sb = createSupabaseAdminClient();
+    const { error } = await sb.from("bookings").insert({
+      room_id: roomId,
+      booker_name: label,
+      date: input.date,
+      start_time: input.startTime,
+      end_time: input.endTime,
+      state: "aprovada",
+      any_room: false,
+      is_block: true,
+    });
+    if (error) skipped++;
+    else created++;
+  }
+
+  return { created, skipped };
+}
+
 /** Move room / change time / shorten duration. */
 export async function updateBooking(id: string, patch: BookingPatch): Promise<{ ok: boolean; error?: string }> {
   if (!isSupabaseConfigured) {
@@ -349,6 +442,7 @@ export async function createRecurringBookings(input: {
         endTime: input.endTime,
         state: "aprovada",
         anyRoom: false,
+        isBlock: false,
         recurrenceId,
         createdAt: new Date().toISOString(),
       });

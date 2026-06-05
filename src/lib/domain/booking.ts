@@ -53,7 +53,7 @@ export function slotStateFor(
     if (b.roomId !== roomId) continue;
     if (!rangesOverlap(b.startTime, b.endTime, blockStart, blockEnd)) continue;
     const state = effectiveState(b, now);
-    if (state === "aprovada") return "busy";
+    if (state === "aprovada") return b.isBlock ? "blocked" : "busy";
     if (state === "pendente") pending = true;
   }
 

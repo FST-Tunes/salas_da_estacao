@@ -6,15 +6,18 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   approveBooking,
   cancelBooking,
+  createBlocks,
   createRecurringBookings,
   createRoom,
   deactivateRoom,
+  deleteBooking,
   reactivateRoom,
   rejectBooking,
   renameRoom,
   updateBooking,
   updateSettings,
 } from "@/lib/data/repository";
+import { notifyBookingDecision } from "@/lib/notify";
 import type { AppSettings } from "@/lib/types";
 
 /**
@@ -40,6 +43,8 @@ function revalidateAdmin() {
 export async function approveAction(id: string, roomId?: string) {
   await requireAdmin();
   const result = await approveBooking(id, roomId);
+  // Notify the booker (only if they left a phone). Never blocks the approval.
+  if (result.ok) await notifyBookingDecision(id, "aprovada");
   revalidateAdmin();
   return result;
 }
@@ -47,6 +52,7 @@ export async function approveAction(id: string, roomId?: string) {
 export async function rejectAction(id: string) {
   await requireAdmin();
   await rejectBooking(id);
+  await notifyBookingDecision(id, "rejeitada");
   revalidateAdmin();
   return { ok: true };
 }
@@ -56,6 +62,30 @@ export async function cancelAction(id: string) {
   await cancelBooking(id);
   revalidateAdmin();
   return { ok: true };
+}
+
+/** Permanent hard delete — guarded by an explicit confirmation in the UI. */
+export async function deleteAction(id: string) {
+  await requireAdmin();
+  await deleteBooking(id);
+  revalidateAdmin();
+  revalidatePath("/admin/salas");
+  return { ok: true };
+}
+
+/** Create one-off block(s) for a room (or every active room when roomId null). */
+export async function createBlocksAction(input: {
+  roomId: string | null;
+  date: string;
+  startTime: string;
+  endTime: string;
+  reason?: string;
+}) {
+  await requireAdmin();
+  const result = await createBlocks(input);
+  revalidateAdmin();
+  revalidatePath("/admin/salas");
+  return result;
 }
 
 export async function updateBookingAction(

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, Phone, Door, Stack, ArrowsClockwise, CaretRight, CalendarBlank } from "@phosphor-icons/react";
+import { User, Phone, Door, Stack, ArrowsClockwise, CaretRight, CalendarBlank, Prohibit } from "@phosphor-icons/react";
 import type { Booking, BookingState } from "@/lib/types";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Overlay } from "@/components/ui/Overlay";
@@ -46,7 +46,13 @@ export function BookingCard({
         <span className="numeral text-base text-navy">
           {formatRange(booking.startTime, booking.endTime)}
         </span>
-        <StatusBadge state={effective} size="sm" />
+        {booking.isBlock ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-navy/10 px-2 py-0.5 text-xs font-medium text-navy" title="Bloqueio de sala">
+            <Prohibit size={12} weight="bold" aria-hidden /> Bloqueio
+          </span>
+        ) : (
+          <StatusBadge state={effective} size="sm" />
+        )}
         {booking.recurrenceId && (
           <span className="inline-flex items-center gap-1 text-xs text-gold" title="Reserva recorrente">
             <ArrowsClockwise size={12} weight="bold" aria-hidden /> Recorrente
@@ -118,7 +124,7 @@ export function BookingCard({
         </Overlay>
       )}
 
-      {showActions && (effective === "pendente" || effective === "aprovada") && (
+      {showActions && (
         <BookingActions
           booking={booking}
           effective={effective}

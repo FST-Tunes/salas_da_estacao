@@ -39,12 +39,19 @@ create table if not exists public.bookings (
   end_time      time not null,
   state         booking_state not null default 'pendente',
   any_room      boolean not null default false,
+  -- Admin one-off block: an 'aprovada' row that makes a room/slot unavailable.
+  -- Reuses the overlap lock; rendered distinctly and never shows a phone.
+  is_block      boolean not null default false,
   recurrence_id uuid,
   created_at    timestamptz not null default now(),
   constraint end_after_start check (end_time > start_time),
   -- "Qualquer sala" requests have no room until the admin assigns one.
   constraint any_room_has_no_room check (not any_room or room_id is null)
 );
+
+-- Idempotent for databases created before is_block existed.
+alter table public.bookings
+  add column if not exists is_block boolean not null default false;
 
 create index if not exists bookings_date_idx on public.bookings (date);
 create index if not exists bookings_room_date_idx on public.bookings (room_id, date);
@@ -79,9 +86,12 @@ create table if not exists public.app_settings (
 insert into public.app_settings (id) values (true) on conflict (id) do nothing;
 
 -- ── Public-safe view (no phone column by construction) ──────────────────────
+-- NOTE: is_block is appended LAST on purpose. `create or replace view` only
+-- allows adding columns at the end; inserting one mid-list renames columns
+-- positionally and Postgres rejects it (42P16).
 create or replace view public.public_bookings as
   select id, room_id, booker_name, date, start_time, end_time,
-         state, any_room, recurrence_id, created_at
+         state, any_room, recurrence_id, created_at, is_block
   from public.bookings;
 
 -- ============================================================================

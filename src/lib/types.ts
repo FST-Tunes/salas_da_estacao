@@ -13,8 +13,12 @@ export type BookingState =
   | "concluida"
   | "expirada";
 
-/** The four states the schedule grid renders per 30-min block. */
-export type SlotState = "free" | "pending" | "busy" | "off";
+/**
+ * States the schedule grid renders per 30-min block. "blocked" is an admin
+ * one-off block (room/day made unavailable) — distinct from "off" (past /
+ * outside operating hours) and "busy" (a real approved booking).
+ */
+export type SlotState = "free" | "pending" | "busy" | "off" | "blocked";
 
 export interface Room {
   id: string;
@@ -41,6 +45,12 @@ export interface Booking {
   state: BookingState;
   /** True when the request asked for any available room. */
   anyRoom: boolean;
+  /**
+   * True for an admin one-off block (not a real booking): the slot is made
+   * unavailable. Stored as an `aprovada` row so it reuses the overlap lock, but
+   * rendered as "blocked" and labelled with `bookerName` (the block reason).
+   */
+  isBlock: boolean;
   recurrenceId: string | null;
   createdAt: string;
 }
